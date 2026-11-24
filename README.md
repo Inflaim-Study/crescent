@@ -8,6 +8,7 @@ A neural competing-risk model that turns a primary-care diagnosis history into<b
 condition-specific cumulative-incidence estimates, accounting for competing death.
 
 [![Paper](https://img.shields.io/badge/paper-under%20review-lightgrey)](#citation)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24497210.svg)](https://doi.org/10.5281/zenodo.24497210)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](requirements.txt)
 [![PyTorch 2.6](https://img.shields.io/badge/PyTorch-2.6-ee4c2c.svg)](requirements.txt)
