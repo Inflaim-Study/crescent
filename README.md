@@ -23,7 +23,6 @@ condition-specific cumulative-incidence estimates, accounting for competing deat
   <img src="figures/figure1/crescent_overview.png" alt="CRESCENT overview: a health record is encoded, read separately for each condition, combined into additive log-hazards, and converted into a competing-risk profile" width="100%">
 </p>
 
-<p align="center"><sub><b>How CRESCENT works.</b> A participant's static characteristics and dated history are encoded by a Transformer. A condition-specific reader attends to the history with a learned temporal bias, and gated attention shares information across conditions. Each condition's log-hazard is the sum of an intercept and four residual terms (static baseline, history, shared patient state, attained age). Condition and death hazards are then combined into competing-risk cumulative incidence.</sub></p>
 
 ---
 
