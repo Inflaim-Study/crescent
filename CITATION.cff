@@ -1,0 +1,77 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper below and this repository."
+title: "CRESCENT: condition-specific competing-risk prediction of first recorded long-term conditions"
+version: 1.0.0
+date-released: 2026-12-01   # TODO: set on release
+license: MIT
+repository-code: "https://github.com/dansileshi/crescent"
+authors:
+  - family-names: Asfaw
+    given-names: Daniel
+    affiliation: University of East Anglia
+    email: d.asfaw@uea.ac.uk
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Zebin
+    given-names: Tahmina
+    affiliation: Brunel University of London
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Khondoker
+    given-names: Mizanur
+    affiliation: University of East Anglia
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Olaniran
+    given-names: Oyebayo Ridwan
+    affiliation: London School of Hygiene and Tropical Medicine
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Lewin
+    given-names: Alex
+    affiliation: London School of Hygiene and Tropical Medicine
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Welch
+    given-names: Ailsa
+    affiliation: Norwich Medical School, University of East Anglia
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Kulinskaya
+    given-names: Elena
+    affiliation: London School of Hygiene and Tropical Medicine
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Fox
+    given-names: Chris
+    affiliation: NIHR HealthTech Research Centre, University of Exeter
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: MacGregor
+    given-names: Alexander J.
+    affiliation: University of East Anglia
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Aung
+    given-names: Min Hane
+    affiliation: University of East Anglia
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+keywords: [multimorbidity, competing risks, survival analysis, electronic health records, transformer, UK Biobank]
+preferred-citation:
+  type: article
+  title: "CRESCENT estimates condition-specific risks of first recorded long-term conditions"
+  authors:
+    - family-names: Asfaw
+      given-names: Daniel
+    - family-names: Zebin
+      given-names: Tahmina
+    - family-names: Khondoker
+      given-names: Mizanur
+    - family-names: Olaniran
+      given-names: Oyebayo Ridwan
+    - family-names: Lewin
+      given-names: Alex
+    - family-names: Welch
+      given-names: Ailsa
+    - family-names: Kulinskaya
+      given-names: Elena
+    - family-names: Fox
+      given-names: Chris
+    - family-names: MacGregor
+      given-names: Alexander J.
+    - family-names: Aung
+      given-names: Min Hane
+  journal: "TBC"
+  year: 2026
+  # doi: TBC

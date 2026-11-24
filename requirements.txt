@@ -1,0 +1,9 @@
+# Versions used in the paper. Replace the unpinned lines with the output of
+# `pip freeze` from the environment where the models were trained.
+# Python 3.11.4, CUDA 12.4, single GPU (cuda:0)
+torch==2.6.0
+numpy
+pandas
+scikit-learn
+joblib
+numba        # optional, speeds up the bootstrap

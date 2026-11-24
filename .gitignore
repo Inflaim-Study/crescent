@@ -1,0 +1,44 @@
+# --- Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- Run outputs and model artifacts (never commit)
+runs/
+runs2/
+outputs/
+checkpoints/
+wandb/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# --- Participant-level data (never commit)
+*.pkl
+*.pickle
+*.npz
+*.npy
+*.parquet
+*.feather
+splits_*/
+data/raw/
+data/prepared/
+data/restricted/
+**/case_data/
+
+# Allow deterministic synthetic fixtures
+!data/synthetic/fixtures/**
+
+# --- OS / editor
+.DS_Store
+.idea/
+.vscode/
