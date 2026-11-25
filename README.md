@@ -28,7 +28,7 @@ condition-specific cumulative-incidence estimates, accounting for competing deat
 
 ## Overview
 
-Estimating which long-term conditions (LTCs) will next be recorded requires accounting for competing death and for differences in the information available for each person. CRESCENT uses primary-care diagnosis histories and recruitment covariates to estimate, for each of 58 LTCs, the probability of a **first recorded diagnosis before death** within 1, 2, 5 and 10 years.
+Estimating which long-term conditions (LTCs) will next be recorded requires accounting for competing death and for differences in the information available for each person. CRESCENT uses primary-care diagnosis histories and recruitment covariates to estimate, for each of 60 LTCs, the probability of a **first recorded diagnosis before death** within 1, 2, 5 and 10 years.
 
 - **Cohort:** 229,950 UK Biobank participants with linked primary-care records, split by assessment centre into training (161,020; 14 centres), validation (22,962; 6 centres) and held-out test (45,968; 7 centres).
 - **Prediction design:** predictors are fixed at recruitment. Each participant–condition pair enters the risk set at **six months** if alive, under observation and free of that condition. Horizons of 12, 24, 60 and 120 months after entry end at recruitment months 18, 30, 66 and 126.
