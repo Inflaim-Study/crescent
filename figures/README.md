@@ -2,7 +2,7 @@
 
 | Folder | Manuscript figure | Contents |
 |---|---|---|
-| `figure1/` | Fig. 1 overview | Overview graphic (PNG for the README, PDF and SVG masters) |
+| `figure1/` | Fig. 1 overview | Overview graphic: animated SVG for the README; static PNG, PDF and SVG for the paper |
 | `figure2/` | Fig. 2 benchmark against eight comparators | `plot.py`, `collect_source_data.py`, `source_data/` |
 | `figure3/` | Fig. 3 discrimination and calibration | `plot.py`, `build_source_data.py`, `config.py`, `source_data/` |
 | `figure4/` | Fig. 4 input contributions | `plot.py`, `collect_source_data.py`, `source_data/` |

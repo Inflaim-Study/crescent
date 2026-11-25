@@ -20,7 +20,7 @@ condition-specific cumulative-incidence estimates, accounting for competing deat
 > **Status:** the paper is under review. 
 
 <p align="center">
-  <img src="figures/figure1/crescent_overview.png" alt="CRESCENT overview: a health record is encoded, read separately for each condition, combined into additive log-hazards, and converted into a competing-risk profile" width="100%">
+  <img src="figures/figure1/crescent_overview_animated.svg" alt="CRESCENT overview: a health record is encoded, read separately for each condition, combined into additive log-hazards, and converted into a competing-risk profile" width="100%">
 </p>
 
 

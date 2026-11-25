@@ -1,0 +1,1156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="crescent-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 580" width="1480" height="580" role="img" aria-label="Crescent longitudinal clinical EHR competing-risks Transformer architecture">
+            <title>Crescent — Longitudinal Clinical EHR Competing-Risks Transformer</title>
+            <style>
+              :root {
+                --dur: 15s;
+                --bg-canvas: #FFFFFF;
+                --bg-zone: #F4F5F7;
+                --bg-card: #FFFFFF;
+                --bg-pill: #F4F5F7;
+                --bg-pill-warm: #F7F6F2;
+                --border-zone: #E2E5EA;
+                --border-card: #E2E5EA;
+                --border-strong: #CBD5E1;
+                --text-primary: #18181B;
+                --text-secondary: #4B5563;
+                --text-muted: #64748B;
+                --navy: #1E3A5F;
+                --navy-deep: #152A45;
+                --navy-soft: #EBF1F8;
+                --navy-text: #FFFFFF;
+                --tf-top-a: rgba(255, 255, 255, 0.72);
+                --tf-top-b: rgba(226, 232, 240, 0.36);
+                --tf-sheen: rgba(255, 255, 255, 0.62);
+                --tf-left: rgba(148, 163, 184, 0.28);
+                --tf-right: rgba(100, 116, 139, 0.20);
+                --tf-edge: rgba(100, 116, 139, 0.45);
+                --tf-ridge: rgba(255, 255, 255, 0.85);
+                --tf-rim: rgba(100, 116, 139, 0.48);
+                --tf-rim-active: #2563EB;
+                --tf-rim-accent: #C2410C;
+                --tf-conduit: rgba(100, 116, 139, 0.34);
+                --tf-micro: rgba(71, 85, 105, 0.42);
+                --tf-shadow: rgba(15, 23, 42, 0.065);
+                --accent: #B4432C;
+                --accent-soft: #FFF7ED;
+                --accent-border: #FDBA74;
+                --diag: #2563EB;
+                --diag-soft: #EFF6FF;
+                --life: #B45309;
+                --life-soft: #FFFBEB;
+                --bio: #0F766E;
+                --bio-soft: #F0FDFA;
+                --teal: #0F766E;
+                --teal-soft: #F0FDFA;
+                --olive: #B45309;
+                --purple: #6D28D9;
+                --purple-soft: #F5F3FF;
+                --slate: #64748B;
+                --wire: #94A3B8;
+                --wire-faint: #CBD5E1;
+                --band-5y: #DBEAFE;
+              }
+
+              svg.cr-dark {
+                --bg-canvas: #0D1117;
+                --bg-zone: #131922;
+                --bg-card: #161B22;
+                --bg-pill: #1E2530;
+                --bg-pill-warm: #221E18;
+                --border-zone: #28303D;
+                --border-card: #30363D;
+                --border-strong: #484F58;
+                --text-primary: #F4F4F5;
+                --text-secondary: #A5B1C2;
+                --text-muted: #7D8590;
+                --navy: #2B4C7E;
+                --navy-deep: #1E3A5F;
+                --navy-soft: #1B293E;
+                --navy-text: #F8FAFC;
+                --tf-top-a: rgba(51, 65, 85, 0.46);
+                --tf-top-b: rgba(15, 23, 42, 0.28);
+                --tf-sheen: rgba(226, 232, 240, 0.14);
+                --tf-left: rgba(148, 163, 184, 0.26);
+                --tf-right: rgba(71, 85, 105, 0.18);
+                --tf-edge: rgba(148, 163, 184, 0.45);
+                --tf-ridge: rgba(226, 232, 240, 0.35);
+                --tf-rim: rgba(148, 163, 184, 0.45);
+                --tf-rim-active: #60A5FA;
+                --tf-rim-accent: #FB923C;
+                --tf-conduit: rgba(148, 163, 184, 0.30);
+                --tf-micro: rgba(148, 163, 184, 0.45);
+                --tf-shadow: rgba(0, 0, 0, 0.34);
+                --accent: #FB923C;
+                --accent-soft: #2A1910;
+                --accent-border: #9A3412;
+                --diag: #60A5FA;
+                --diag-soft: #172554;
+                --life: #FBBF24;
+                --life-soft: #2B210B;
+                --bio: #2DD4BF;
+                --bio-soft: #0F2926;
+                --teal: #2DD4BF;
+                --teal-soft: #0F2926;
+                --olive: #A3E635;
+                --purple: #A78BFA;
+                --purple-soft: #221B3A;
+                --slate: #94A3B8;
+                --wire: #586370;
+                --wire-faint: #2D3542;
+                --band-5y: #1E3A5F;
+              }
+
+              svg.cr-paused * {
+                animation-play-state: paused !important;
+              }
+
+              /* Typography */
+              .cr-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif; }
+              .cr-serif { font-family: Georgia, "Times New Roman", serif; }
+              .cr-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+              .cr-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.01em; fill: var(--text-muted); }
+              .cr-title { font-size: 12px; font-weight: 700; fill: var(--text-primary); }
+              .cr-sub { font-size: 10px; font-weight: 400; fill: var(--text-secondary); }
+              .cr-label { font-size: 11px; font-weight: 500; fill: var(--text-primary); }
+              .cr-math { font-size: 13.5px; font-style: italic; fill: var(--text-primary); }
+
+              /* Base Surfaces */
+              .cr-canvas { fill: var(--bg-canvas); }
+              .cr-zone { fill: var(--bg-zone); stroke: var(--border-zone); stroke-width: 1.1; }
+              .cr-card { fill: var(--bg-card); stroke: var(--border-card); stroke-width: 1.2; }
+              .cr-card-warm { fill: var(--bg-pill-warm); stroke: var(--border-card); stroke-width: 1.2; }
+              .cr-pill { fill: var(--bg-pill); stroke: var(--border-card); stroke-width: 1; }
+              .cr-navy { fill: var(--navy); }
+              .cr-wire { fill: none; stroke: var(--wire); stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
+              .cr-wire-dash { fill: none; stroke: var(--wire); stroke-width: 1.35; stroke-dasharray: 4 3.5; stroke-linecap: round; stroke-linejoin: round; }
+              .cr-web { fill: none; stroke: var(--wire-faint); stroke-width: 0.95; }
+
+              /* ============================================================== */
+              /* PHASE 1 (0–18%): STATIC COVARIATES &amp; STATIC ENCODER            */
+              /* ============================================================== */
+              .cr-p1 { animation: crStage1 var(--dur) ease-in-out infinite; }
+              @keyframes crStage1 {
+                0.00% { opacity: 0.55; }
+                4.00%, 96.00% { opacity: 1; }
+                100.00% { opacity: 0.55; }
+              }
+
+              .cr-se-ring {
+                fill: none;
+                stroke: var(--diag);
+                stroke-width: 2;
+                animation: crSeRing var(--dur) ease-in-out infinite;
+              }
+              @keyframes crSeRing {
+                0.00%, 1.60% { opacity: 0; }
+                4.80%, 12.80% { opacity: 0.9; }
+                16.00%, 100.00% { opacity: 0; }
+              }
+
+              .cr-pulse-s {
+                fill: none;
+                stroke: var(--diag);
+                stroke-width: 2.2;
+                stroke-linecap: round;
+                stroke-dasharray: 24 140;
+                stroke-dashoffset: 164;
+                animation: crFlowS var(--dur) ease-in-out infinite;
+              }
+              @keyframes crFlowS {
+                0.00%, 6.40% { stroke-dashoffset: 164; opacity: 0; }
+                8.00% { opacity: 1; }
+                15.20% { stroke-dashoffset: 0; opacity: 1; }
+                17.60%, 100.00% { stroke-dashoffset: 0; opacity: 0; }
+              }
+
+              /* ============================================================== */
+              /* PHASE 2 (12–36%): EVENTS -&gt; FUSION -&gt; 3-LAYER TRANSFORMER      */
+              /* ============================================================== */
+              .cr-ev-1 { animation: crEv1 var(--dur) ease-out infinite; }
+              .cr-ev-2 { animation: crEv2 var(--dur) ease-out infinite; }
+              .cr-ev-3 { animation: crEv3 var(--dur) ease-out infinite; }
+              .cr-ev-4 { animation: crEv4 var(--dur) ease-out infinite; }
+              .cr-ev-5 { animation: crEv5 var(--dur) ease-out infinite; }
+              .cr-ev-6 { animation: crEv6 var(--dur) ease-out infinite; }
+
+              @keyframes crEv1 { 0.00%, 8.00% { opacity: 0.48; } 11.20%, 96.00% { opacity: 1; } 100.00% { opacity: 0.48; } }
+              @keyframes crEv2 { 0.00%, 9.60% { opacity: 0.48; } 12.80%, 96.00% { opacity: 1; } 100.00% { opacity: 0.48; } }
+              @keyframes crEv3 { 0.00%, 11.20% { opacity: 0.48; } 14.40%, 96.00% { opacity: 1; } 100.00% { opacity: 0.48; } }
+              @keyframes crEv4 { 0.00%, 12.80% { opacity: 0.48; } 16.00%, 96.00% { opacity: 1; } 100.00% { opacity: 0.48; } }
+              @keyframes crEv5 { 0.00%, 14.40% { opacity: 0.48; } 17.60%, 96.00% { opacity: 1; } 100.00% { opacity: 0.48; } }
+              @keyframes crEv6 { 0.00%, 16.00% { opacity: 0.52; } 19.20%, 96.00% { opacity: 1; } 100.00% { opacity: 0.52; } }
+
+              .cr-p2 { animation: crStage2 var(--dur) ease-in-out infinite; }
+              @keyframes crStage2 {
+                0.00%, 12.80% { opacity: 0.50; }
+                17.60%, 96.00% { opacity: 1; }
+                100.00% { opacity: 0.50; }
+              }
+
+              /* Sequential 3D Isometric Transformer Cascade (L1 -&gt; L2 -&gt; L3) */
+              .cr-slab-1 { animation: crSlabLift1 var(--dur) ease-in-out infinite; }
+              .cr-slab-2 { animation: crSlabLift2 var(--dur) ease-in-out infinite; }
+              .cr-slab-3 { animation: crSlabLift3 var(--dur) ease-in-out infinite; }
+
+              @keyframes crSlabLift1 {
+                0.00%, 16.00% { transform: translateY(0px); }
+                18.40%, 22.40% { transform: translateY(-2.5px); }
+                25.60%, 100.00% { transform: translateY(0px); }
+              }
+              @keyframes crSlabLift2 {
+                0.00%, 18.40% { transform: translateY(0px); }
+                20.80%, 24.80% { transform: translateY(-2.5px); }
+                28.00%, 100.00% { transform: translateY(0px); }
+              }
+              @keyframes crSlabLift3 {
+                0.00%, 20.80% { transform: translateY(0px); }
+                23.20%, 27.20% { transform: translateY(-2.5px); }
+                30.40%, 100.00% { transform: translateY(0px); }
+              }
+
+              .cr-tf-rim-1 { fill: none; stroke: var(--tf-rim); stroke-width: 0.9; stroke-linecap: round; stroke-linejoin: round; animation: crRim1 var(--dur) ease-in-out infinite; }
+              .cr-tf-rim-2 { fill: none; stroke: var(--tf-rim); stroke-width: 0.9; stroke-linecap: round; stroke-linejoin: round; animation: crRim2 var(--dur) ease-in-out infinite; }
+              .cr-tf-rim-3 { fill: none; stroke: var(--tf-rim); stroke-width: 0.9; stroke-linecap: round; stroke-linejoin: round; animation: crRim3 var(--dur) ease-in-out infinite; }
+
+              @keyframes crRim1 {
+                0.00%, 16.00% { stroke: var(--tf-rim); stroke-width: 0.9; }
+                18.40%, 22.40% { stroke: var(--tf-rim-active); stroke-width: 1.75; }
+                25.60%, 100.00% { stroke: var(--tf-rim); stroke-width: 0.9; }
+              }
+              @keyframes crRim2 {
+                0.00%, 18.40% { stroke: var(--tf-rim); stroke-width: 0.9; }
+                20.80%, 24.80% { stroke: var(--tf-rim-active); stroke-width: 1.75; }
+                28.00%, 100.00% { stroke: var(--tf-rim); stroke-width: 0.9; }
+              }
+              @keyframes crRim3 {
+                0.00%, 20.80% { stroke: var(--tf-rim); stroke-width: 0.9; }
+                23.20%, 27.20% { stroke: var(--tf-rim-accent); stroke-width: 1.75; }
+                30.40%, 100.00% { stroke: var(--tf-rim); stroke-width: 0.9; }
+              }
+
+              .cr-tf-micro-1 { stroke: var(--tf-micro); opacity: 0.55; animation: crMicro1 var(--dur) ease-in-out infinite; }
+              .cr-tf-micro-2 { stroke: var(--tf-micro); opacity: 0.55; animation: crMicro2 var(--dur) ease-in-out infinite; }
+              .cr-tf-micro-3 { stroke: var(--tf-micro); opacity: 0.55; animation: crMicro3 var(--dur) ease-in-out infinite; }
+
+              @keyframes crMicro1 { 0.00%, 16.00% { stroke: var(--tf-micro); opacity: 0.55; } 18.40%, 22.40% { stroke: var(--tf-rim-active); opacity: 1; } 25.60%, 100.00% { stroke: var(--tf-micro); opacity: 0.55; } }
+              @keyframes crMicro2 { 0.00%, 18.40% { stroke: var(--tf-micro); opacity: 0.55; } 20.80%, 24.80% { stroke: var(--tf-rim-active); opacity: 1; } 28.00%, 100.00% { stroke: var(--tf-micro); opacity: 0.55; } }
+              @keyframes crMicro3 { 0.00%, 20.80% { stroke: var(--tf-micro); opacity: 0.55; } 23.20%, 27.20% { stroke: var(--tf-rim-accent); opacity: 1; } 30.40%, 100.00% { stroke: var(--tf-micro); opacity: 0.55; } }
+
+              .cr-tf-beam {
+                fill: none;
+                stroke: var(--tf-rim-active);
+                stroke-width: 1.7;
+                stroke-linecap: round;
+                stroke-dasharray: 18 110;
+                stroke-dashoffset: 128;
+                animation: crTfBeam var(--dur) ease-in-out infinite;
+              }
+              .cr-tf-beam-center {
+                stroke: var(--tf-rim-accent);
+              }
+              @keyframes crTfBeam {
+                0.00%, 16.00% { stroke-dashoffset: 128; opacity: 0; }
+                17.60% { opacity: 0.95; }
+                27.20% { stroke-dashoffset: 0; opacity: 0.95; }
+                29.60%, 100.00% { stroke-dashoffset: 0; opacity: 0; }
+              }
+
+              .cr-pulse-z {
+                fill: none;
+                stroke: var(--accent);
+                stroke-width: 2.2;
+                stroke-linecap: round;
+                stroke-dasharray: 28 360;
+                stroke-dashoffset: 388;
+                animation: crFlowZ var(--dur) ease-in-out infinite;
+              }
+              @keyframes crFlowZ {
+                0.00%, 24.00% { stroke-dashoffset: 388; opacity: 0; }
+                25.60% { opacity: 1; }
+                32.00% { stroke-dashoffset: 0; opacity: 1; }
+                34.40%, 100.00% { stroke-dashoffset: 0; opacity: 0; }
+              }
+
+              /* ============================================================== */
+              /* PHASE 3 (32–52%): CONDITION QUERIES &amp; CONDITION READER         */
+              /* ============================================================== */
+              .cr-p3 { animation: crStage3 var(--dur) ease-in-out infinite; }
+              @keyframes crStage3 {
+                0.00%, 24.00% { opacity: 0.48; }
+                28.80%, 96.00% { opacity: 1; }
+                100.00% { opacity: 0.48; }
+              }
+
+              .cr-attn-key {
+                fill: none;
+                stroke: var(--accent);
+                stroke-width: 2.1;
+                stroke-linecap: round;
+                stroke-dasharray: 200;
+                stroke-dashoffset: 200;
+                animation: crAttnSweep var(--dur) ease-out infinite;
+              }
+              @keyframes crAttnSweep {
+                0.00%, 28.80% { stroke-dashoffset: 200; opacity: 0.25; }
+                31.20% { opacity: 1; }
+                38.40%, 96.00% { stroke-dashoffset: 0; opacity: 0.95; }
+                100.00% { stroke-dashoffset: 200; opacity: 0.25; }
+              }
+
+              .cr-pulse-h {
+                fill: none;
+                stroke: var(--accent);
+                stroke-width: 2.2;
+                stroke-linecap: round;
+                stroke-dasharray: 18 90;
+                stroke-dashoffset: 108;
+                animation: crFlowH var(--dur) ease-in-out infinite;
+              }
+              @keyframes crFlowH {
+                0.00%, 39.20% { stroke-dashoffset: 108; opacity: 0; }
+                40.80% { opacity: 1; }
+                45.60% { stroke-dashoffset: 0; opacity: 1; }
+                48.00%, 100.00% { stroke-dashoffset: 0; opacity: 0; }
+              }
+
+              /* ============================================================== */
+              /* PHASE 4 (44–70%): ALL 5 ADDITIVE CARDS + SYNCED EQUATION       */
+              /* ============================================================== */
+              .cr-p4 { animation: crStage4 var(--dur) ease-in-out infinite; }
+              @keyframes crStage4 {
+                0.00%, 33.60% { opacity: 0.50; }
+                37.60%, 96.00% { opacity: 1; }
+                100.00% { opacity: 0.50; }
+              }
+
+              .cr-glow-1 { fill: none; stroke: var(--purple); stroke-width: 2; animation: crGlow1 var(--dur) ease-in-out infinite; }
+              .cr-glow-2 { fill: none; stroke: var(--diag);   stroke-width: 2; animation: crGlow2 var(--dur) ease-in-out infinite; }
+              .cr-glow-3 { fill: none; stroke: var(--accent); stroke-width: 2; animation: crGlow3 var(--dur) ease-in-out infinite; }
+              .cr-glow-4 { fill: none; stroke: var(--teal);   stroke-width: 2; animation: crGlow4 var(--dur) ease-in-out infinite; }
+              .cr-glow-5 { fill: none; stroke: var(--life);   stroke-width: 2; animation: crGlow5 var(--dur) ease-in-out infinite; }
+
+              @keyframes crGlow1 { 0.00%, 34.40% { opacity: 0; } 36.80%, 54.40% { opacity: 1; } 60.80%, 96.00% { opacity: 0.45; } 100.00% { opacity: 0; } }
+              @keyframes crGlow2 { 0.00%, 37.60% { opacity: 0; } 40.00%, 54.40% { opacity: 1; } 60.80%, 96.00% { opacity: 0.45; } 100.00% { opacity: 0; } }
+              @keyframes crGlow3 { 0.00%, 40.80% { opacity: 0; } 43.20%, 54.40% { opacity: 1; } 60.80%, 96.00% { opacity: 0.55; } 100.00% { opacity: 0; } }
+              @keyframes crGlow4 { 0.00%, 44.00% { opacity: 0; } 46.40%, 54.40% { opacity: 1; } 60.80%, 96.00% { opacity: 0.45; } 100.00% { opacity: 0; } }
+              @keyframes crGlow5 { 0.00%, 47.20% { opacity: 0; } 49.60%, 54.40% { opacity: 1; } 60.80%, 96.00% { opacity: 0.45; } 100.00% { opacity: 0; } }
+
+              .cr-eq-1 { animation: crEq1 var(--dur) ease-in-out infinite; }
+              .cr-eq-2 { animation: crEq2 var(--dur) ease-in-out infinite; }
+              .cr-eq-3 { animation: crEq3 var(--dur) ease-in-out infinite; }
+              .cr-eq-4 { animation: crEq4 var(--dur) ease-in-out infinite; }
+              .cr-eq-5 { animation: crEq5 var(--dur) ease-in-out infinite; }
+              .cr-eq-d { animation: crEqD var(--dur) ease-in-out infinite; }
+
+              @keyframes crEq1 { 0.00%, 34.40% { fill: var(--text-primary); } 36.80%, 54.40% { fill: var(--purple); font-weight: 700; } 60.80%, 100.00% { fill: var(--text-primary); } }
+              @keyframes crEq2 { 0.00%, 37.60% { fill: var(--text-primary); } 40.00%, 54.40% { fill: var(--diag); font-weight: 700; } 60.80%, 100.00% { fill: var(--text-primary); } }
+              @keyframes crEq3 { 0.00%, 40.80% { fill: var(--text-primary); } 43.20%, 54.40% { fill: var(--accent); font-weight: 700; } 60.80%, 100.00% { fill: var(--text-primary); } }
+              @keyframes crEq4 { 0.00%, 44.00% { fill: var(--text-primary); } 46.40%, 54.40% { fill: var(--teal); font-weight: 700; } 60.80%, 100.00% { fill: var(--text-primary); } }
+              @keyframes crEq5 { 0.00%, 47.20% { fill: var(--text-primary); } 49.60%, 54.40% { fill: var(--life); font-weight: 700; } 60.80%, 100.00% { fill: var(--text-primary); } }
+              @keyframes crEqD { 0.00%, 40.00% { fill: var(--text-primary); } 43.20%, 54.40% { fill: var(--navy); font-weight: 700; } 60.80%, 100.00% { fill: var(--text-primary); } }
+
+              .cr-bus-pulse {
+                fill: none;
+                stroke-width: 2.2;
+                stroke-linecap: round;
+                stroke-dasharray: 24 160;
+                stroke-dashoffset: 184;
+                animation: crBusSurge var(--dur) ease-in-out infinite;
+              }
+              @keyframes crBusSurge {
+                0.00%, 48.00% { stroke-dashoffset: 184; opacity: 0; }
+                49.60% { opacity: 1; }
+                55.20% { stroke-dashoffset: 0; opacity: 1; }
+                57.60%, 100.00% { stroke-dashoffset: 0; opacity: 0; }
+              }
+
+              .cr-sum-ring {
+                fill: none;
+                stroke: var(--accent);
+                stroke-width: 2;
+                animation: crSumRing var(--dur) ease-in-out infinite;
+              }
+              @keyframes crSumRing {
+                0.00%, 48.80% { opacity: 0; }
+                51.20%, 56.00% { opacity: 1; }
+                59.20%, 100.00% { opacity: 0; }
+              }
+
+              /* ============================================================== */
+              /* PARALLEL DEATH BRANCH (50–68%)                                 */
+              /* ============================================================== */
+              .cr-pulse-c-death {
+                fill: none;
+                stroke: var(--navy);
+                stroke-width: 2.2;
+                stroke-linecap: round;
+                stroke-dasharray: 34 520;
+                stroke-dashoffset: 554;
+                animation: crFlowCDeath var(--dur) ease-in-out infinite;
+              }
+              @keyframes crFlowCDeath {
+                0.00%, 38.40% { stroke-dashoffset: 554; opacity: 0; }
+                40.00% { opacity: 1; }
+                48.00% { stroke-dashoffset: 0; opacity: 1; }
+                51.20%, 100.00% { stroke-dashoffset: 0; opacity: 0; }
+              }
+
+              .cr-death-ring {
+                fill: none;
+                stroke: var(--navy);
+                stroke-width: 2.2;
+                animation: crDeathRing var(--dur) ease-in-out infinite;
+              }
+              @keyframes crDeathRing {
+                0.00%, 43.20% { opacity: 0; }
+                46.40%, 54.40% { opacity: 1; }
+                59.20%, 96.00% { opacity: 0.4; }
+                100.00% { opacity: 0; }
+              }
+
+              .cr-pulse-mu {
+                fill: none;
+                stroke: var(--navy);
+                stroke-width: 2.2;
+                stroke-linecap: round;
+                stroke-dasharray: 22 140;
+                stroke-dashoffset: 162;
+                animation: crFlowMu var(--dur) ease-in-out infinite;
+              }
+              @keyframes crFlowMu {
+                0.00%, 47.20% { stroke-dashoffset: 162; opacity: 0; }
+                48.80% { opacity: 1; }
+                55.20% { stroke-dashoffset: 0; opacity: 1; }
+                57.60%, 100.00% { stroke-dashoffset: 0; opacity: 0; }
+              }
+
+              /* ============================================================== */
+              /* PHASE 5 (66–84%): COMPETING RISKS &amp; 6 CURVES                   */
+              /* ============================================================== */
+              .cr-cr-bar-glow {
+                fill: none;
+                stroke: var(--accent);
+                stroke-width: 2.4;
+                animation: crBarGlow var(--dur) ease-in-out infinite;
+              }
+              @keyframes crBarGlow {
+                0.00%, 51.20% { opacity: 0; }
+                54.40%, 60.00% { opacity: 0.95; }
+                64.00%, 100.00% { opacity: 0; }
+              }
+
+              .cr-p5 { animation: crStage5 var(--dur) ease-in-out infinite; }
+              @keyframes crStage5 {
+                0.00%, 52.80% { opacity: 0.50; }
+                57.60%, 96.00% { opacity: 1; }
+                100.00% { opacity: 0.50; }
+              }
+
+              .cr-band-pulse { animation: crBandPulse var(--dur) ease-in-out infinite; }
+              @keyframes crBandPulse {
+                0.00%, 56.00% { opacity: 0.35; }
+                60.80%, 67.20% { opacity: 0.85; }
+                82.91%, 96.00% { opacity: 0.55; }
+                100.00% { opacity: 0.35; }
+              }
+
+              .cr-curve-1 { stroke-dasharray: 240; stroke-dashoffset: 240; animation: crDrawC1 var(--dur) ease-out infinite; }
+              .cr-curve-2 { stroke-dasharray: 230; stroke-dashoffset: 230; animation: crDrawC2 var(--dur) ease-out infinite; }
+              .cr-curve-3 { stroke-dasharray: 230; stroke-dashoffset: 230; animation: crDrawC3 var(--dur) ease-out infinite; }
+              .cr-curve-4 { stroke-dasharray: 225; stroke-dashoffset: 225; animation: crDrawC4 var(--dur) ease-out infinite; }
+              .cr-curve-5 { stroke-dasharray: 220; stroke-dashoffset: 220; animation: crDrawC5 var(--dur) ease-out infinite; }
+              .cr-curve-6 { stroke-dasharray: 220; stroke-dashoffset: 220; animation: crDrawC6 var(--dur) ease-out infinite; }
+
+              @keyframes crDrawC1 { 0.00%, 54.40% { stroke-dashoffset: 240; opacity: 0.28; } 56.00% { opacity: 1; } 65.60%, 96.80% { stroke-dashoffset: 0; opacity: 1; } 100.00% { stroke-dashoffset: 240; opacity: 0.28; } }
+              @keyframes crDrawC2 { 0.00%, 55.20% { stroke-dashoffset: 230; opacity: 0.28; } 56.80% { opacity: 1; } 65.60%, 96.80% { stroke-dashoffset: 0; opacity: 1; } 100.00% { stroke-dashoffset: 230; opacity: 0.28; } }
+              @keyframes crDrawC3 { 0.00%, 56.00% { stroke-dashoffset: 230; opacity: 0.28; } 57.60% { opacity: 1; } 66.40%, 96.80% { stroke-dashoffset: 0; opacity: 1; } 100.00% { stroke-dashoffset: 230; opacity: 0.28; } }
+              @keyframes crDrawC4 { 0.00%, 56.80% { stroke-dashoffset: 225; opacity: 0.28; } 58.40% { opacity: 1; } 66.40%, 96.80% { stroke-dashoffset: 0; opacity: 1; } 100.00% { stroke-dashoffset: 225; opacity: 0.28; } }
+              @keyframes crDrawC5 { 0.00%, 57.60% { stroke-dashoffset: 220; opacity: 0.28; } 59.20% { opacity: 1; } 67.20%, 96.80% { stroke-dashoffset: 0; opacity: 1; } 100.00% { stroke-dashoffset: 220; opacity: 0.28; } }
+              @keyframes crDrawC6 { 0.00%, 58.40% { stroke-dashoffset: 220; opacity: 0.28; } 60.00% { opacity: 1; } 67.20%, 96.80% { stroke-dashoffset: 0; opacity: 1; } 100.00% { stroke-dashoffset: 220; opacity: 0.28; } }
+
+              .cr-sweep { transform-box: fill-box; transform-origin: 0 50%; animation: crSweep var(--dur) ease-in-out infinite; }
+              @keyframes crSweep { 0.00%, 55.20% { transform: scaleX(0); } 56.00% { transform: scaleX(0); animation-timing-function: linear; } 67.20%, 96.80% { transform: scaleX(1); } 100.00% { transform: scaleX(0); } }
+              .cr-legend-pop { animation: crLegendPop var(--dur) ease-out infinite; }
+              @keyframes crLegendPop {
+                0.00%, 59.20% { opacity: 0.50; }
+                65.60%, 96.80% { opacity: 1; }
+                100.00% { opacity: 0.50; }
+              }
+
+              /* open on the finished diagram (inside the hold), then rebuild */
+              #crescent-svg * { animation-delay: calc(var(--dur) * -0.72); }
+
+              /* Reduced-motion &amp; static renderer fallback */
+              @media (prefers-reduced-motion: reduce) {
+                * { animation: none !important; }
+                .cr-attn-key { stroke-dashoffset: 0 !important; opacity: .95 !important; }
+                .cr-pulse-s, .cr-pulse-z, .cr-pulse-h, .cr-bus-pulse, .cr-pulse-c-death, .cr-pulse-mu, .cr-tf-beam,
+                .cr-se-ring, .cr-sum-ring, .cr-cr-bar-glow { opacity: 0 !important; }
+                .cr-glow-1, .cr-glow-2, .cr-glow-3, .cr-glow-4, .cr-glow-5 { opacity: .45 !important; }
+                .cr-death-ring { opacity: .4 !important; }
+                .cr-band-pulse { opacity: .55 !important; }
+              }
+            </style>
+
+            <defs>
+              <!-- Refined tapered dart arrowheads -->
+              <marker id="cr-arrow" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+                <path d="M 0.5 1.8 L 8.5 5 L 0.5 8.2 L 2.4 5 Z" fill="var(--wire)"/>
+              </marker>
+              <marker id="cr-arrow-dashed" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+                <path d="M 0.5 1.8 L 8.5 5 L 0.5 8.2 L 2.4 5 Z" fill="var(--wire)"/>
+              </marker>
+              <clipPath id="cr-sweep-clip"><rect class="cr-sweep" x="1244" y="208" width="210" height="154"/></clipPath>
+              <!-- Directional linear gradient for 3D isometric Transformer slab top faces -->
+              <linearGradient id="cr-tf-top-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="var(--tf-top-a)"/>
+                <stop offset="100%" stop-color="var(--tf-top-b)"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Canvas Background -->
+            <rect width="1480" height="580" rx="14" class="cr-canvas"/>
+
+            <!-- =============================================================== -->
+            <!-- TOP STAGE HEADINGS (simple sentence-case, no numbering)         -->
+            <!-- =============================================================== -->
+            <g class="cr-sans">
+              <text x="20" y="22" class="cr-eyebrow">Patient inputs</text>
+              <line x1="100" y1="18.5" x2="345" y2="18.5" stroke="var(--border-zone)" stroke-width="1"/>
+
+              <text x="363" y="22" class="cr-eyebrow">Crescent encoder</text>
+              <line x1="464" y1="18.5" x2="495" y2="18.5" stroke="var(--border-zone)" stroke-width="1"/>
+
+              <text x="515" y="22" class="cr-eyebrow">Condition reader &amp; log-hazards</text>
+              <line x1="686" y1="18.5" x2="1145" y2="18.5" stroke="var(--border-zone)" stroke-width="1"/>
+
+              <text x="1165" y="22" class="cr-eyebrow">Competing risks</text>
+              <line x1="1256" y1="18.5" x2="1465" y2="18.5" stroke="var(--border-zone)" stroke-width="1"/>
+            </g>
+
+            <!-- =============================================================== -->
+            <!-- ZONE 1: STATIC COVARIATES, STATIC ENCODER & PRE-INDEX EVENTS    -->
+            <!-- =============================================================== -->
+            <g id="cr-zone-1" class="cr-sans">
+              <!-- Static Covariates Card (x: 20, y: 40, w: 192, h: 122) -->
+              <g class="cr-p1">
+                <rect x="20" y="40" width="192" height="122" rx="10" class="cr-card-warm"/>
+                <text x="32" y="60" class="cr-title">Static covariates</text>
+                <rect x="148" y="48" width="54" height="16" rx="8" fill="var(--bg-card)" stroke="var(--border-card)" stroke-width="0.9"/>
+                <text x="175" y="59" font-size="8.6" font-weight="500" fill="var(--text-muted)" text-anchor="middle">Synthetic</text>
+
+                <g font-size="10.8">
+                  <text x="32" y="83" fill="var(--text-muted)">Sex</text>
+                  <text x="200" y="83" font-weight="600" fill="var(--text-primary)" text-anchor="end">Female</text>
+
+                  <text x="32" y="105" fill="var(--text-muted)">Ethnicity</text>
+                  <text x="200" y="105" font-weight="600" fill="var(--text-primary)" text-anchor="end">White</text>
+
+                  <text x="32" y="127" fill="var(--text-muted)">Townsend quintile</text>
+                  <text x="200" y="127" font-weight="600" class="cr-mono" fill="var(--text-primary)" text-anchor="end">Q4</text>
+
+                  <text x="32" y="149" fill="var(--text-muted)">Age at index</text>
+                  <text x="200" y="149" font-weight="600" class="cr-mono" fill="var(--text-primary)" text-anchor="end">56</text>
+                </g>
+
+                <!-- 4 Crisp Straight Horizontal Arrows into Static Encoder -->
+                <path d="M 212 77 L 243 77" class="cr-wire" marker-end="url(#cr-arrow)"/>
+                <path d="M 212 100 L 243 100" class="cr-wire" marker-end="url(#cr-arrow)"/>
+                <path d="M 212 123 L 243 123" class="cr-wire" marker-end="url(#cr-arrow)"/>
+                <path d="M 212 148 L 243 148" class="cr-wire" marker-end="url(#cr-arrow)"/>
+
+                <!-- Static Encoder Box (x: 236, y: 40, w: 252, h: 128) -->
+                <rect x="236" y="40" width="252" height="128" rx="10" class="cr-zone"/>
+                <rect x="234" y="38" width="256" height="132" rx="12" class="cr-se-ring"/>
+                <text x="248" y="57" font-size="10.5" font-weight="700" fill="var(--text-primary)">Static encoder</text>
+
+                <!-- 4 Stacked Sub-Pills -->
+                <rect x="246" y="68" width="122" height="19" rx="5" class="cr-card"/>
+                <text x="307" y="81" font-size="9.5" font-weight="500" fill="var(--text-primary)" text-anchor="middle">Sex embedding</text>
+
+                <rect x="246" y="91" width="122" height="19" rx="5" class="cr-card"/>
+                <text x="307" y="104" font-size="9.5" font-weight="500" fill="var(--text-primary)" text-anchor="middle">Ethnicity embedding</text>
+
+                <rect x="246" y="114" width="122" height="19" rx="5" class="cr-card"/>
+                <text x="307" y="127" font-size="9.5" font-weight="500" fill="var(--text-primary)" text-anchor="middle">Quintile embedding</text>
+
+                <rect x="246" y="137" width="122" height="25" rx="5" class="cr-card"/>
+                <text x="307" y="148" font-size="9.3" font-weight="600" fill="var(--text-primary)" text-anchor="middle">Continuous MLP</text>
+                <text x="307" y="158" font-size="7.6" fill="var(--text-muted)" text-anchor="middle">Age · Townsend (z) · flag</text>
+
+                <!-- Symmetrical High-Tension S-Curve Fan-In -> Straight Concat -> Projection MLP -->
+                <path d="M 368 77 C 386 77, 382 113, 398 113" class="cr-wire"/>
+                <path d="M 368 100 C 384 100, 384 113, 398 113" class="cr-wire"/>
+                <path d="M 368 123 C 384 123, 384 113, 398 113" class="cr-wire"/>
+                <path d="M 368 148 C 386 148, 382 113, 398 113" class="cr-wire"/>
+                <path d="M 398 113 L 408 113" class="cr-wire" marker-end="url(#cr-arrow)"/>
+                <text x="392" y="70" font-size="8.4" font-weight="600" fill="var(--text-muted)" text-anchor="middle">Concat</text>
+
+                <rect x="411" y="90" width="67" height="46" rx="8" class="cr-card"/>
+                <text x="444.5" y="110" font-size="9.8" font-weight="600" fill="var(--text-primary)" text-anchor="middle">Projection</text>
+                <text x="444.5" y="123" font-size="9.8" font-weight="600" fill="var(--text-primary)" text-anchor="middle">MLP</text>
+
+                <!-- Crisp Straight Vertical Drop to s (Static profile) -->
+                <path d="M 444.5 136 L 444.5 175" class="cr-wire" marker-end="url(#cr-arrow)"/>
+                <rect x="430.5" y="178" width="28" height="22" rx="6" fill="var(--diag-soft)" stroke="var(--diag)" stroke-width="1.2"/>
+                <text x="444.5" y="193" class="cr-serif" font-size="13" font-style="italic" font-weight="700" fill="var(--diag)" text-anchor="middle">s</text>
+                <text x="444.5" y="211" font-size="9.2" font-weight="600" fill="var(--text-secondary)" text-anchor="middle">Static profile</text>
+
+                <!-- Architectural Quarter-Turn Fillet Sweep from s into Top of Event Fusion -->
+                <path d="M 430.5 189 L 342 189 A 20 20 0 0 0 322 209 L 322 211" class="cr-wire" marker-end="url(#cr-arrow)"/>
+                <path d="M 430.5 189 L 342 189 A 20 20 0 0 0 322 209 L 322 211" class="cr-pulse-s"/>
+              </g>
+
+              <!-- Bottom-Left Timeline: Events before index -->
+              <text x="20" y="194" class="cr-title cr-p1">Events before index</text>
+              <line x1="78" y1="224" x2="78" y2="454" stroke="var(--border-strong)" stroke-width="1.4" class="cr-p1"/>
+
+              <!-- Event 1: Age 46 (Diagnosis) -->
+              <g class="cr-ev-1">
+                <text x="68" y="228" class="cr-mono" font-size="10.2" fill="var(--text-secondary)" text-anchor="end">Age 46</text>
+                <circle cx="78" cy="224" r="4" fill="var(--diag)" stroke="var(--bg-canvas)" stroke-width="1.3"/>
+                <text x="90" y="228" class="cr-label">Dermatitis and eczema</text>
+                <path d="M 216 224 L 256 224" class="cr-wire-dash"/>
+                <rect x="260" y="217" width="14" height="14" rx="3.5" fill="var(--diag)"/>
+                <path d="M 274 224 L 303 224" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              </g>
+
+              <!-- Event 2: Age 50 (Lifestyle) -->
+              <g class="cr-ev-2">
+                <text x="68" y="274" class="cr-mono" font-size="10.2" fill="var(--text-secondary)" text-anchor="end">Age 50</text>
+                <circle cx="78" cy="270" r="4" fill="var(--life)" stroke="var(--bg-canvas)" stroke-width="1.3"/>
+                <text x="90" y="274" class="cr-label">Current smoking</text>
+                <path d="M 184 270 L 256 270" class="cr-wire-dash"/>
+                <rect x="260" y="263" width="14" height="14" rx="3.5" fill="var(--life)"/>
+                <path d="M 274 270 L 303 270" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              </g>
+
+              <!-- Event 3: Age 51 (Diagnosis) -->
+              <g class="cr-ev-3">
+                <text x="68" y="320" class="cr-mono" font-size="10.2" fill="var(--text-secondary)" text-anchor="end">Age 51</text>
+                <circle cx="78" cy="316" r="4" fill="var(--diag)" stroke="var(--bg-canvas)" stroke-width="1.3"/>
+                <text x="90" y="320" class="cr-label">Sleep disorders</text>
+                <path d="M 176 316 L 256 316" class="cr-wire-dash"/>
+                <rect x="260" y="309" width="14" height="14" rx="3.5" fill="var(--diag)"/>
+                <path d="M 274 316 L 303 316" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              </g>
+
+              <!-- Event 4: Age 53 (Lifestyle) -->
+              <g class="cr-ev-4">
+                <text x="68" y="366" class="cr-mono" font-size="10.2" fill="var(--text-secondary)" text-anchor="end">Age 53</text>
+                <circle cx="78" cy="362" r="4" fill="var(--life)" stroke="var(--bg-canvas)" stroke-width="1.3"/>
+                <text x="90" y="366" class="cr-label">Alcohol intake</text>
+                <path d="M 170 362 L 256 362" class="cr-wire-dash"/>
+                <rect x="260" y="355" width="14" height="14" rx="3.5" fill="var(--life)"/>
+                <path d="M 274 362 L 303 362" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              </g>
+
+              <!-- Event 5: Age 55 (Biomarker - Deep Teal) -->
+              <g class="cr-ev-5">
+                <text x="68" y="412" class="cr-mono" font-size="10.2" fill="var(--text-secondary)" text-anchor="end">Age 55</text>
+                <circle cx="78" cy="408" r="4" fill="var(--bio)" stroke="var(--bg-canvas)" stroke-width="1.3"/>
+                <text x="90" y="412" class="cr-label">CRP <tspan class="cr-mono" font-weight="600" fill="var(--bio)">6.4 mg/L</tspan></text>
+                <path d="M 172 408 L 256 408" class="cr-wire-dash"/>
+                <rect x="260" y="401" width="14" height="14" rx="3.5" fill="var(--bio)"/>
+                <path d="M 274 408 L 303 408" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              </g>
+
+              <!-- Event 6: Age 56 (Index · CLS token) -->
+              <g class="cr-ev-6">
+                <text x="68" y="458" class="cr-mono" font-size="10.5" font-weight="700" fill="var(--text-primary)" text-anchor="end">Age 56</text>
+                <polygon points="78,448 84,454 78,460 72,454" fill="var(--navy)"/>
+                <text x="90" y="458" font-size="11" font-weight="700" fill="var(--text-primary)">Index · CLS token</text>
+                <path d="M 194 454 L 248 454" class="cr-wire-dash"/>
+                <rect x="251" y="445" width="32" height="18" rx="4.5" class="cr-navy"/>
+                <text x="267" y="457.5" class="cr-mono" font-size="9" font-weight="700" fill="var(--navy-text)" text-anchor="middle">CLS</text>
+                <path d="M 283 454 L 303 454" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              </g>
+
+              <!-- Compact Modality Legend (y = 496) -->
+              <g class="cr-p1" font-size="9" fill="var(--text-muted)">
+                <circle cx="26" cy="496" r="3" fill="var(--diag)"/>
+                <text x="33" y="499">Diagnosis</text>
+                <circle cx="88" cy="496" r="3" fill="var(--life)"/>
+                <text x="95" y="499">Lifestyle</text>
+                <circle cx="145" cy="496" r="3" fill="var(--bio)"/>
+                <text x="152" y="499">Biomarker</text>
+                <polygon points="210,492 214,496 210,500 206,496" fill="var(--navy)"/>
+                <text x="218" y="499">Index CLS</text>
+              </g>
+
+              <!-- Event Fusion Vertical Pill (x: 306, y: 214, w: 32, h: 254) -->
+              <g class="cr-p2">
+                <rect x="306" y="214" width="32" height="254" rx="14" class="cr-zone" stroke="var(--border-strong)" stroke-width="1.3"/>
+                <text x="322" y="341" font-size="11.5" font-weight="700" fill="var(--text-primary)" text-anchor="middle" transform="rotate(-90 322 341)">Event fusion</text>
+
+                <!-- Caption cleanly above the flow arrow (zero overlap) -->
+                <text x="348" y="236" font-size="8.8" fill="var(--text-secondary)">Token + type + age</text>
+                <text x="348" y="248" font-size="8.8" fill="var(--text-secondary)">+ value + static profile</text>
+
+                <!-- Crisp Straight Horizontal Arrow from Event Fusion into 3D Transformer L1 -->
+                <path d="M 338 304 L 375 304" class="cr-wire" marker-end="url(#cr-arrow)"/>
+
+                <!-- =========================================================== -->
+                <!-- TRANSPARENT 3D FROSTED-GLASS ISOMETRIC TRANSFORMER          -->
+                <!-- =========================================================== -->
+                <g id="cr-transformer-3d">
+                  <!-- Understated Sentence-Case Header -->
+                  <text x="429" y="268" font-size="11.2" font-weight="700" fill="var(--text-primary)" text-anchor="middle">Transformer</text>
+                  <text x="429" y="280" font-size="8.6" fill="var(--text-muted)" text-anchor="middle">3 layers</text>
+
+                  <!-- Soft Airy Ground Shadow beneath L3 -->
+                  <ellipse cx="429" cy="395" rx="43" ry="9.5" fill="var(--tf-shadow)"/>
+
+                  <!-- Ultra-Thin Glass-Tinted Curved Residual-Skip Arc -->
+                  <path d="M 374 307 C 362 322, 362 350, 374 366" fill="none" stroke="var(--tf-edge)" stroke-width="1" stroke-dasharray="2.5 2.5" marker-end="url(#cr-arrow)"/>
+
+                  <!-- 3 Continuous See-Through Vertical Light-Guide Conduits (L1 -> L2 -> L3 -> Exit) -->
+                  <g>
+                    <line x1="415" y1="298" x2="415" y2="380" stroke="var(--tf-conduit)" stroke-width="1"/>
+                    <line x1="429" y1="293" x2="429" y2="388" stroke="var(--tf-conduit)" stroke-width="1.15"/>
+                    <line x1="443" y1="298" x2="443" y2="380" stroke="var(--tf-conduit)" stroke-width="1"/>
+                    <path d="M 415 298 L 415 380" class="cr-tf-beam"/>
+                    <path d="M 429 293 L 429 388" class="cr-tf-beam cr-tf-beam-center"/>
+                    <path d="M 443 298 L 443 380" class="cr-tf-beam"/>
+                  </g>
+
+                  <!-- LAYER 3 (Bottom Frosted-Glass Slab, center 429, 364) -->
+                  <g class="cr-slab-3">
+                    <!-- 6px Beveled Crystal Edges -->
+                    <path d="M 379 364 L 429 381 L 429 387 L 379 370 Z" fill="var(--tf-left)" stroke="var(--tf-edge)" stroke-width="0.85" stroke-linejoin="round"/>
+                    <path d="M 429 381 L 479 364 L 479 370 L 429 387 Z" fill="var(--tf-right)" stroke="var(--tf-edge)" stroke-width="0.85" stroke-linejoin="round"/>
+                    <!-- Translucent Top Glass Plane -->
+                    <path d="M 429 347 L 479 364 L 429 381 L 379 364 Z" fill="url(#cr-tf-top-grad)" stroke="var(--tf-edge)" stroke-width="0.85" stroke-linejoin="round"/>
+                    <!-- Diagonal Specular Reflection Sheen -->
+                    <path d="M 407 354.5 L 429 347 L 453 355.2 L 417 376.8 L 395 369.4 Z" fill="var(--tf-sheen)"/>
+                    <!-- Bright Specular Front-Top Ridge -->
+                    <path d="M 380.5 364.5 L 429 380.4 L 477.5 364.5" fill="none" stroke="var(--tf-ridge)" stroke-width="1" stroke-linecap="round"/>
+                    <!-- Animated Refractive Outer Rim -->
+                    <path d="M 429 347 L 479 364 L 429 381 L 379 364 Z" class="cr-tf-rim-3"/>
+                    <!-- Etched Gossamer Self-Attention Micro-Details -->
+                    <g class="cr-tf-micro-3" fill="none" stroke-width="0.75">
+                      <path d="M 404 364 L 429 356 L 454 364 M 415 364 L 443 364"/>
+                      <circle cx="404" cy="364" r="1.2" fill="var(--diag)" stroke="none"/>
+                      <circle cx="454" cy="364" r="1.2" fill="var(--accent)" stroke="none"/>
+                    </g>
+                    <!-- Refractive Conduit Intersection Rings -->
+                    <g fill="none" stroke="var(--tf-rim-accent)" stroke-width="0.8" opacity="0.75">
+                      <ellipse cx="415" cy="364" rx="2.6" ry="1.15"/>
+                      <ellipse cx="429" cy="364" rx="2.9" ry="1.25"/>
+                      <ellipse cx="443" cy="364" rx="2.6" ry="1.15"/>
+                    </g>
+                    <line x1="481" y1="364" x2="485" y2="364" stroke="var(--tf-edge)" stroke-width="0.8"/>
+                    <text x="488" y="367.5" class="cr-mono" font-size="8.4" font-weight="600" fill="var(--text-muted)">L3</text>
+                  </g>
+
+                  <!-- LAYER 2 (Middle Frosted-Glass Slab, center 429, 334) -->
+                  <g class="cr-slab-2">
+                    <path d="M 379 334 L 429 351 L 429 357 L 379 340 Z" fill="var(--tf-left)" stroke="var(--tf-edge)" stroke-width="0.85" stroke-linejoin="round"/>
+                    <path d="M 429 351 L 479 334 L 479 340 L 429 357 Z" fill="var(--tf-right)" stroke="var(--tf-edge)" stroke-width="0.85" stroke-linejoin="round"/>
+                    <path d="M 429 317 L 479 334 L 429 351 L 379 334 Z" fill="url(#cr-tf-top-grad)" stroke="var(--tf-edge)" stroke-width="0.85" stroke-linejoin="round"/>
+                    <path d="M 407 324.5 L 429 317 L 453 325.2 L 417 346.8 L 395 339.4 Z" fill="var(--tf-sheen)"/>
+                    <path d="M 380.5 334.5 L 429 350.4 L 477.5 334.5" fill="none" stroke="var(--tf-ridge)" stroke-width="1" stroke-linecap="round"/>
+                    <path d="M 429 317 L 479 334 L 429 351 L 379 334 Z" class="cr-tf-rim-2"/>
+                    <g class="cr-tf-micro-2" fill="none" stroke-width="0.75">
+                      <path d="M 404 334 L 429 326 L 454 334 M 415 334 L 443 334"/>
+                      <circle cx="404" cy="334" r="1.2" fill="var(--diag)" stroke="none"/>
+                      <circle cx="454" cy="334" r="1.2" fill="var(--bio)" stroke="none"/>
+                    </g>
+                    <g fill="none" stroke="var(--tf-rim-active)" stroke-width="0.8" opacity="0.72">
+                      <ellipse cx="415" cy="334" rx="2.6" ry="1.15"/>
+                      <ellipse cx="429" cy="334" rx="2.9" ry="1.25"/>
+                      <ellipse cx="443" cy="334" rx="2.6" ry="1.15"/>
+                    </g>
+                    <line x1="481" y1="334" x2="485" y2="334" stroke="var(--tf-edge)" stroke-width="0.8"/>
+                    <text x="488" y="337.5" class="cr-mono" font-size="8.4" font-weight="600" fill="var(--text-muted)">L2</text>
+                  </g>
+
+                  <!-- LAYER 1 (Top Frosted-Glass Slab, center 429, 304) -->
+                  <g class="cr-slab-1">
+                    <path d="M 379 304 L 429 321 L 429 327 L 379 310 Z" fill="var(--tf-left)" stroke="var(--tf-edge)" stroke-width="0.85" stroke-linejoin="round"/>
+                    <path d="M 429 321 L 479 304 L 479 310 L 429 327 Z" fill="var(--tf-right)" stroke="var(--tf-edge)" stroke-width="0.85" stroke-linejoin="round"/>
+                    <path d="M 429 287 L 479 304 L 429 321 L 379 304 Z" fill="url(#cr-tf-top-grad)" stroke="var(--tf-edge)" stroke-width="0.85" stroke-linejoin="round"/>
+                    <path d="M 407 294.5 L 429 287 L 453 295.2 L 417 316.8 L 395 309.4 Z" fill="var(--tf-sheen)"/>
+                    <path d="M 380.5 304.5 L 429 320.4 L 477.5 304.5" fill="none" stroke="var(--tf-ridge)" stroke-width="1" stroke-linecap="round"/>
+                    <path d="M 429 287 L 479 304 L 429 321 L 379 304 Z" class="cr-tf-rim-1"/>
+                    <g class="cr-tf-micro-1" fill="none" stroke-width="0.75">
+                      <path d="M 404 304 L 429 296 L 454 304 M 415 304 L 443 304"/>
+                      <circle cx="404" cy="304" r="1.2" fill="var(--diag)" stroke="none"/>
+                      <circle cx="454" cy="304" r="1.2" fill="var(--life)" stroke="none"/>
+                    </g>
+                    <g fill="none" stroke="var(--tf-rim-active)" stroke-width="0.8" opacity="0.72">
+                      <ellipse cx="415" cy="304" rx="2.6" ry="1.15"/>
+                      <ellipse cx="429" cy="304" rx="2.9" ry="1.25"/>
+                      <ellipse cx="443" cy="304" rx="2.6" ry="1.15"/>
+                    </g>
+                    <line x1="481" y1="304" x2="485" y2="304" stroke="var(--tf-edge)" stroke-width="0.8"/>
+                    <text x="488" y="307.5" class="cr-mono" font-size="8.4" font-weight="600" fill="var(--text-muted)">L1</text>
+                  </g>
+                </g>
+
+                <!-- Crisp Straight Vertical Stem from L3 bottom tip stepping directly to Z and c -->
+                <path d="M 429 389 L 429 467 L 452 467" class="cr-wire" marker-end="url(#cr-arrow)"/>
+                <path d="M 429 424 L 452 424" class="cr-wire" marker-end="url(#cr-arrow)"/>
+
+                <!-- Output Z (Encoded events) -->
+                <rect x="455" y="413" width="24" height="22" rx="6" class="cr-card"/>
+                <text x="467" y="428" class="cr-serif" font-size="12.5" font-style="italic" font-weight="700" fill="var(--text-primary)" text-anchor="middle">Z</text>
+                <text x="421" y="427" font-size="9.2" font-weight="600" fill="var(--text-secondary)" text-anchor="end">Encoded events</text>
+
+                <!-- Output c (CLS summary) -->
+                <rect x="455" y="456" width="24" height="22" rx="6" fill="var(--teal-soft)" stroke="var(--teal)" stroke-width="1.2"/>
+                <text x="467" y="471" class="cr-serif" font-size="12.5" font-style="italic" font-weight="700" fill="var(--teal)" text-anchor="middle">c</text>
+                <text x="421" y="470" font-size="9.2" font-weight="600" fill="var(--text-secondary)" text-anchor="end">CLS summary</text>
+              </g>
+            </g>
+
+            <!-- =============================================================== -->
+            <!-- ZONE 2: CONDITION READER (x: 515 to 805)                        -->
+            <!-- =============================================================== -->
+            <g id="cr-zone-2" class="cr-sans cr-p3">
+              <rect x="515" y="34" width="290" height="330" rx="12" class="cr-zone"/>
+
+              <!-- Top Box: Condition queries -->
+              <rect x="530" y="46" width="260" height="54" rx="9" class="cr-card"/>
+              <text x="660" y="66" class="cr-title" text-anchor="middle">Condition queries</text>
+              <text x="660" y="87" class="cr-serif cr-math" text-anchor="middle">
+                q<tspan dy="3" font-size="9">k</tspan><tspan dy="-3"> = e</tspan><tspan dy="3" font-size="9">k</tspan><tspan dy="-3"> + f</tspan><tspan dy="3" font-size="9">s</tspan><tspan dy="-3">(s) + f</tspan><tspan dy="3" font-size="9">c</tspan><tspan dy="-3">(c)</tspan>
+              </text>
+
+              <!-- 6 Condition Query Pills -->
+              <g font-size="9.5" font-weight="700" text-anchor="middle">
+                <rect x="536" y="120" width="38" height="22" rx="11" class="cr-navy"/>
+                <text x="555" y="134.5" fill="var(--navy-text)">IHD</text>
+
+                <rect x="580" y="120" width="38" height="22" rx="11" class="cr-navy"/>
+                <text x="599" y="134.5" fill="var(--navy-text)">DBT</text>
+
+                <rect x="624" y="120" width="38" height="22" rx="11" class="cr-navy"/>
+                <text x="643" y="134.5" fill="var(--navy-text)">LIV</text>
+
+                <rect x="668" y="120" width="38" height="22" rx="11" class="cr-navy"/>
+                <text x="687" y="134.5" fill="var(--navy-text)">PSO</text>
+
+                <rect x="712" y="120" width="38" height="22" rx="11" class="cr-navy"/>
+                <text x="731" y="134.5" fill="var(--navy-text)">BON</text>
+
+                <rect x="756" y="120" width="32" height="22" rx="11" class="cr-pill"/>
+                <text x="772" y="134.5" fill="var(--text-secondary)">+53</text>
+              </g>
+
+              <!-- Graceful Curved Bipartite Cross-Attention Web -->
+              <g class="cr-web">
+                <path d="M 555 142 C 555 166, 562 174, 562 198"/>
+                <path d="M 555 142 C 555 170, 626 170, 626 198"/>
+                <path d="M 555 142 C 555 172, 658 168, 658 198"/>
+                <path d="M 599 142 C 599 168, 562 172, 562 198"/>
+                <path d="M 599 142 C 599 166, 594 174, 594 198"/>
+                <path d="M 599 142 C 599 168, 626 172, 626 198"/>
+                <path d="M 599 142 C 599 172, 690 168, 690 198"/>
+                <path d="M 599 142 C 599 174, 722 166, 722 198"/>
+                <path d="M 643 142 C 643 170, 562 170, 562 198"/>
+                <path d="M 643 142 C 643 166, 658 174, 658 198"/>
+                <path d="M 643 142 C 643 168, 690 172, 690 198"/>
+                <path d="M 643 142 C 643 170, 722 170, 722 198"/>
+                <path d="M 687 142 C 687 172, 562 168, 562 198"/>
+                <path d="M 687 142 C 687 168, 626 172, 626 198"/>
+                <path d="M 687 142 C 687 166, 722 174, 722 198"/>
+                <path d="M 731 142 C 731 172, 594 168, 594 198"/>
+                <path d="M 731 142 C 731 168, 658 172, 658 198"/>
+                <path d="M 731 142 C 731 166, 690 174, 690 198"/>
+                <path d="M 731 142 C 731 166, 722 174, 722 198"/>
+                <path d="M 772 142 C 772 172, 626 168, 626 198"/>
+                <path d="M 772 142 C 772 168, 690 172, 690 198"/>
+                <path d="M 772 142 C 772 166, 722 174, 722 198"/>
+              </g>
+
+              <!-- 3 Key Clinical Attention Curves in Terracotta (IHD -> Smoking, CRP, CLS) -->
+              <path d="M 555 142 C 555 168, 594 172, 594 198" class="cr-attn-key"/>
+              <path d="M 555 142 C 562 176, 682 166, 690 198" class="cr-attn-key"/>
+              <path d="M 555 142 C 566 180, 712 162, 722 198" class="cr-attn-key"/>
+
+              <!-- Row of 6 Encoded Event Square Tokens -->
+              <rect x="555" y="199" width="14" height="14" rx="3.5" fill="var(--diag)"/>
+              <rect x="587" y="199" width="14" height="14" rx="3.5" fill="var(--life)"/>
+              <rect x="619" y="199" width="14" height="14" rx="3.5" fill="var(--diag)"/>
+              <rect x="651" y="199" width="14" height="14" rx="3.5" fill="var(--life)"/>
+              <rect x="683" y="199" width="14" height="14" rx="3.5" fill="var(--bio)"/>
+              <rect x="715" y="199" width="14" height="14" rx="3.5" class="cr-navy"/>
+              <text x="735" y="209.5" font-size="9" font-weight="600" fill="var(--text-secondary)">Encoded events</text>
+
+              <!-- Cross-attention -->
+              <path d="M 660 215 L 660 225" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              <rect x="530" y="228" width="260" height="44" rx="9" class="cr-card"/>
+              <text x="660" y="247" class="cr-title" text-anchor="middle">Cross-attention</text>
+              <text x="660" y="262" class="cr-sub" text-anchor="middle">Learned condition × event × time bias</text>
+
+              <!-- Gated interaction (vertically aligned with h_{k,t} at y=301) -->
+              <path d="M 660 272 L 660 277" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              <rect x="530" y="280" width="260" height="44" rx="9" class="cr-card"/>
+              <text x="660" y="299" class="cr-title" text-anchor="middle">Gated interaction</text>
+              <text x="660" y="314" class="cr-sub" text-anchor="middle">Attention + FFN across conditions</text>
+
+              <text x="660" y="352" font-size="9.5" font-weight="600" fill="var(--text-muted)" text-anchor="middle">Condition reader</text>
+
+              <!-- Crisp Straight Horizontal Arrow from Gated interaction directly into h_{k,t} History -->
+              <path d="M 790 301 L 829 301" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              <path d="M 790 301 L 829 301" class="cr-pulse-h"/>
+            </g>
+
+            <!-- =============================================================== -->
+            <!-- SIGNATURE ARCHITECTURAL CURVES FOR CROSS-ZONE ROUTING           -->
+            <!-- =============================================================== -->
+            <g id="cr-wires-global">
+              <!-- Signature Cross-Zone S-Curve: Z -> Encoded events (strictly horizontal entry/exit tangents) -->
+              <path d="M 479 424 C 504 424, 504 410, 504 396 V 226 C 504 212, 512 206, 526 206 L 550 206" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              <path d="M 479 424 C 504 424, 504 410, 504 396 V 226 C 504 212, 512 206, 526 206 L 550 206" pathLength="388" class="cr-pulse-z"/>
+
+              <!-- ONLY ONE arrow from c: Architectural Quarter-Turn Elbow (r=20) -> Death head -->
+              <path d="M 467 478 L 467 502 A 20 20 0 0 0 487 522 L 869 522" class="cr-wire-dash" marker-end="url(#cr-arrow-dashed)"/>
+              <path d="M 467 478 L 467 502 A 20 20 0 0 0 487 522 L 869 522" class="cr-pulse-c-death"/>
+              <text x="660" y="514" class="cr-sans" font-size="9.8" font-weight="600" fill="var(--text-secondary)" text-anchor="middle">CLS summary to the death head</text>
+            </g>
+
+            <!-- =============================================================== -->
+            <!-- ZONE 3: EQUATIONS, ALL 5 ADDITIVE CARDS & PARALLEL DEATH BRANCH -->
+            <!-- =============================================================== -->
+            <g id="cr-zone-3" class="cr-sans cr-p4">
+              <!-- Top Equations Block with individually synced <tspan> terms -->
+              <text x="832" y="56" class="cr-title">Condition log-hazard</text>
+              <text x="832" y="80" class="cr-serif cr-math">
+                log λ<tspan dy="3" font-size="9">k,t</tspan><tspan dy="-3"> = </tspan><tspan class="cr-eq-1">α<tspan dy="3" font-size="9">k</tspan><tspan dy="-3"> </tspan></tspan>+<tspan class="cr-eq-2"> b<tspan dy="3" font-size="9">k,t</tspan><tspan dy="-3"> </tspan></tspan>+<tspan class="cr-eq-3"> h<tspan dy="3" font-size="9">k,t</tspan><tspan dy="-3"> </tspan></tspan>+<tspan class="cr-eq-4"> g<tspan dy="3" font-size="9">t</tspan><tspan dy="-3"> </tspan></tspan>+<tspan class="cr-eq-5"> a<tspan dy="3" font-size="9">k,t</tspan></tspan>
+              </text>
+
+              <text x="832" y="114" class="cr-title">Death log-hazard</text>
+              <text x="832" y="138" class="cr-serif cr-math">
+                <tspan class="cr-eq-d">log μ<tspan dy="3" font-size="9">t</tspan><tspan dy="-3"> = α</tspan><tspan dy="-5" font-size="9">D</tspan><tspan dy="5"> + d</tspan><tspan dy="3" font-size="9">t</tspan></tspan>
+              </text>
+
+              <!-- 5 Stacked Additive Hazard Cards -->
+              <!-- 1. alpha_k (Purple) -->
+              <g>
+                <rect x="832" y="180" width="172" height="42" rx="8" class="cr-card"/>
+                <rect x="831" y="179" width="174" height="44" rx="9" class="cr-glow-1"/>
+                <rect x="836" y="185" width="32" height="32" rx="5.5" fill="var(--purple-soft)"/>
+                <text x="852" y="205" class="cr-serif cr-math" font-size="13" fill="var(--purple)" text-anchor="middle">α<tspan dy="3" font-size="8.5">k</tspan></text>
+                <text x="875" y="196" font-size="10.5" font-weight="700" fill="var(--text-primary)">Intercept</text>
+                <text x="875" y="209" font-size="8.8" fill="var(--text-secondary)">Per condition</text>
+                <rect x="945" y="185" width="54" height="14" rx="7" fill="var(--purple-soft)"/>
+                <text x="972" y="194.5" font-size="7.2" font-weight="700" fill="var(--purple)" text-anchor="middle">Condition k</text>
+              </g>
+
+              <!-- 2. b_{k,t} (Blue - from s) -->
+              <g>
+                <rect x="832" y="230" width="172" height="42" rx="8" class="cr-card"/>
+                <rect x="831" y="229" width="174" height="44" rx="9" class="cr-glow-2"/>
+                <rect x="836" y="235" width="32" height="32" rx="5.5" fill="var(--diag-soft)"/>
+                <text x="852" y="255" class="cr-serif cr-math" font-size="13" fill="var(--diag)" text-anchor="middle">b<tspan dy="3" font-size="8.5">k,t</tspan></text>
+                <text x="875" y="246" font-size="10.5" font-weight="700" fill="var(--text-primary)">Baseline</text>
+                <text x="875" y="259" font-size="8.8" fill="var(--text-secondary)">Static profile s</text>
+                <rect x="959" y="235" width="40" height="14" rx="7" fill="var(--diag-soft)"/>
+                <text x="979" y="244.5" font-size="7.4" font-weight="700" fill="var(--diag)" text-anchor="middle">from s</text>
+              </g>
+
+              <!-- 3. h_{k,t} (Terracotta - History) -->
+              <g>
+                <rect x="832" y="280" width="172" height="42" rx="8" class="cr-card"/>
+                <rect x="831" y="279" width="174" height="44" rx="9" class="cr-glow-3"/>
+                <rect x="836" y="285" width="32" height="32" rx="5.5" fill="var(--accent-soft)"/>
+                <text x="852" y="305" class="cr-serif cr-math" font-size="13" fill="var(--accent)" text-anchor="middle">h<tspan dy="3" font-size="8.5">k,t</tspan></text>
+                <text x="875" y="296" font-size="10.5" font-weight="700" fill="var(--text-primary)">History</text>
+                <text x="875" y="309" font-size="8.8" fill="var(--text-secondary)">Condition reader</text>
+                <rect x="955" y="285" width="44" height="14" rx="7" fill="var(--accent-soft)"/>
+                <text x="977" y="294.5" font-size="7.4" font-weight="700" fill="var(--accent)" text-anchor="middle">from Z</text>
+              </g>
+
+              <!-- 4. g_t (Teal - from c) -->
+              <g>
+                <rect x="832" y="330" width="172" height="42" rx="8" class="cr-card"/>
+                <rect x="831" y="329" width="174" height="44" rx="9" class="cr-glow-4"/>
+                <rect x="836" y="335" width="32" height="32" rx="5.5" fill="var(--teal-soft)"/>
+                <text x="852" y="355" class="cr-serif cr-math" font-size="13" fill="var(--teal)" text-anchor="middle">g<tspan dy="3" font-size="8.5">t</tspan></text>
+                <text x="875" y="346" font-size="10.5" font-weight="700" fill="var(--text-primary)">Shared state</text>
+                <text x="875" y="359" font-size="8.8" fill="var(--text-secondary)">CLS summary c</text>
+                <rect x="959" y="335" width="40" height="14" rx="7" fill="var(--teal-soft)"/>
+                <text x="979" y="344.5" font-size="7.4" font-weight="700" fill="var(--teal)" text-anchor="middle">from c</text>
+              </g>
+
+              <!-- 5. a_{k,t} (Amber - from Age + Sex) -->
+              <g>
+                <rect x="832" y="380" width="172" height="42" rx="8" class="cr-card"/>
+                <rect x="831" y="379" width="174" height="44" rx="9" class="cr-glow-5"/>
+                <rect x="836" y="385" width="32" height="32" rx="5.5" fill="var(--life-soft)"/>
+                <text x="852" y="405" class="cr-serif cr-math" font-size="13" fill="var(--life)" text-anchor="middle">a<tspan dy="3" font-size="8.5">k,t</tspan></text>
+                <text x="875" y="396" font-size="10.5" font-weight="700" fill="var(--text-primary)">Attained age</text>
+                <text x="875" y="409" font-size="8.8" fill="var(--text-secondary)">Age and sex</text>
+                <rect x="949" y="385" width="50" height="14" rx="7" fill="var(--life-soft)"/>
+                <text x="974" y="394.5" font-size="7.2" font-weight="700" fill="var(--life)" text-anchor="middle">Age + Sex</text>
+              </g>
+
+              <!-- Symmetrical Sankey / Musical-Brace Merge into (+) -->
+              <path d="M 1004 201 C 1021 201, 1015 301, 1029 301" class="cr-wire"/>
+              <path d="M 1004 251 C 1019 251, 1016 301, 1029 301" class="cr-wire"/>
+              <path d="M 1004 301 L 1029 301" class="cr-wire"/>
+              <path d="M 1004 351 C 1019 351, 1016 301, 1029 301" class="cr-wire"/>
+              <path d="M 1004 401 C 1021 401, 1015 301, 1029 301" class="cr-wire"/>
+
+              <!-- Synchronized Glowing Pulses Along All 5 Symmetrical Sankey Wires -->
+              <path d="M 1004 201 C 1021 201, 1015 301, 1029 301" stroke="var(--purple)" class="cr-bus-pulse"/>
+              <path d="M 1004 251 C 1019 251, 1016 301, 1029 301" stroke="var(--diag)" class="cr-bus-pulse"/>
+              <path d="M 1004 301 L 1029 301" stroke="var(--accent)" class="cr-bus-pulse"/>
+              <path d="M 1004 351 C 1019 351, 1016 301, 1029 301" stroke="var(--teal)" class="cr-bus-pulse"/>
+              <path d="M 1004 401 C 1021 401, 1015 301, 1029 301" stroke="var(--life)" class="cr-bus-pulse"/>
+
+              <!-- (+) Summation Node -->
+              <circle cx="1041" cy="301" r="11" class="cr-card" stroke="var(--border-strong)" stroke-width="1.3"/>
+              <circle cx="1041" cy="301" r="13.5" class="cr-sum-ring"/>
+              <text x="1041" y="305.5" font-size="14" font-weight="700" fill="var(--text-primary)" text-anchor="middle">+</text>
+
+              <!-- Crisp Straight Horizontal Axis: (+) -> λ_{k,t} -> Competing risks -->
+              <path d="M 1052 301 L 1066 301" class="cr-wire" marker-end="url(#cr-arrow)"/>
+
+              <rect x="1069" y="277" width="68" height="48" rx="8" class="cr-card"/>
+              <rect x="1068" y="276" width="70" height="50" rx="9" class="cr-sum-ring"/>
+              <text x="1103" y="298" class="cr-serif cr-math" font-size="14" text-anchor="middle">λ<tspan dy="3" font-size="9">k,t</tspan></text>
+              <text x="1103" y="316" font-size="8.8" fill="var(--text-secondary)" text-anchor="middle">clamp → exp</text>
+
+              <path d="M 1137 301 L 1164 301" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              <path d="M 1137 301 L 1164 301" stroke="var(--accent)" class="cr-bus-pulse"/>
+
+              <!-- Dotted Horizontal Divider: Parallel death branch (y: 456) -->
+              <text x="832" y="459" font-size="9.5" font-weight="700" fill="var(--text-secondary)">Parallel death branch</text>
+              <line x1="946" y1="456" x2="1142" y2="456" stroke="var(--border-strong)" stroke-width="1.2" stroke-dasharray="2 3"/>
+
+              <!-- Parallel Death Branch (y: 484) -->
+              <rect x="832" y="490" width="24" height="22" rx="6" fill="var(--diag-soft)" stroke="var(--diag)" stroke-width="1.2"/>
+              <text x="844" y="505" class="cr-serif" font-size="12.5" font-style="italic" font-weight="700" fill="var(--diag)" text-anchor="middle">s</text>
+              <text x="826" y="505" font-size="9.2" font-weight="600" fill="var(--text-secondary)" text-anchor="end">Static profile</text>
+              <path d="M 856 501 L 869 501" class="cr-wire" marker-end="url(#cr-arrow)"/>
+
+              <rect x="873" y="486" width="152" height="50" rx="9" fill="var(--bg-card)" stroke="var(--border-strong)" stroke-width="1.3" stroke-dasharray="4 3"/>
+              <rect x="872" y="485" width="154" height="52" rx="10" class="cr-death-ring"/>
+              <text x="949" y="507" class="cr-title" text-anchor="middle">Death head</text>
+              <text x="949" y="524" font-size="9.2" fill="var(--text-secondary)" text-anchor="middle">Uses CLS and static profile</text>
+
+              <!-- Crisp Straight Horizontal Axis: Death head -> μ_t -> Competing risks -->
+              <path d="M 1025 511 L 1066 511" class="cr-wire-dash" marker-end="url(#cr-arrow-dashed)"/>
+              <path d="M 1025 511 L 1066 511" class="cr-pulse-mu"/>
+
+              <rect x="1069" y="487" width="68" height="48" rx="8" fill="var(--bg-card)" stroke="var(--border-strong)" stroke-width="1.3" stroke-dasharray="4 3"/>
+              <rect x="1068" y="486" width="70" height="50" rx="9" class="cr-death-ring"/>
+              <text x="1103" y="508" class="cr-serif cr-math" font-size="14" text-anchor="middle">μ<tspan dy="3" font-size="9">t</tspan></text>
+              <text x="1103" y="526" font-size="8.8" fill="var(--text-secondary)" text-anchor="middle">clamp → exp</text>
+
+              <path d="M 1137 511 L 1164 511" class="cr-wire-dash" marker-end="url(#cr-arrow-dashed)"/>
+              <path d="M 1137 511 L 1164 511" class="cr-pulse-mu"/>
+            </g>
+
+            <!-- =============================================================== -->
+            <!-- ZONE 4: COMPETING RISKS & 10-YEAR CUMULATIVE INCIDENCE          -->
+            <!-- =============================================================== -->
+            <g id="cr-zone-4" class="cr-sans">
+              <!-- Tall Navy Competing Risks Bar (x: 1168, y: 264, w: 36, h: 276) -->
+              <g class="cr-p4">
+                <rect x="1168" y="264" width="36" height="276" rx="14" class="cr-navy"/>
+                <rect x="1165" y="261" width="42" height="282" rx="16" class="cr-cr-bar-glow"/>
+                <text x="1186" y="402" font-size="12.5" font-weight="700" fill="var(--navy-text)" text-anchor="middle" transform="rotate(-90 1186 402)">Competing risks</text>
+                <path d="M 1204 301 L 1224 301" class="cr-wire" marker-end="url(#cr-arrow)"/>
+              </g>
+
+              <!-- Chart & Legend Container (x: 1222 to 1465) -->
+              <g class="cr-p5">
+                <text x="1348" y="196" class="cr-title" text-anchor="middle">Cumulative incidence (%)</text>
+
+                <!-- 5y Soft Blue Highlight Band (month 60 -> x = 1348) -->
+                <rect x="1342" y="220" width="12" height="140" fill="var(--band-5y)" class="cr-band-pulse"/>
+                <text x="1348" y="214" class="cr-mono" font-size="9.5" font-weight="700" fill="var(--diag)" text-anchor="middle">5 y</text>
+
+                <!-- Plot Gridlines & Y-Axis -->
+                <g class="cr-mono" font-size="9.5" fill="var(--text-muted)" text-anchor="end">
+                  <line x1="1246" y1="220" x2="1450" y2="220" stroke="var(--border-zone)" stroke-width="1"/>
+                  <text x="1240" y="223">20</text>
+
+                  <line x1="1246" y1="255" x2="1450" y2="255" stroke="var(--border-zone)" stroke-width="1"/>
+                  <text x="1240" y="258">15</text>
+
+                  <line x1="1246" y1="290" x2="1450" y2="290" stroke="var(--border-zone)" stroke-width="1"/>
+                  <text x="1240" y="293">10</text>
+
+                  <line x1="1246" y1="325" x2="1450" y2="325" stroke="var(--border-zone)" stroke-width="1"/>
+                  <text x="1240" y="328">5</text>
+
+                  <line x1="1246" y1="360" x2="1450" y2="360" stroke="var(--border-strong)" stroke-width="1.2"/>
+                  <line x1="1246" y1="220" x2="1246" y2="360" stroke="var(--border-strong)" stroke-width="1.2"/>
+                  <text x="1240" y="363">0</text>
+                </g>
+
+                <!-- X-Axis Ticks -->
+                <g class="cr-mono" font-size="9.5" fill="var(--text-muted)" text-anchor="middle">
+                  <text x="1246" y="373">0</text>
+                  <text x="1287" y="373">24</text>
+                  <text x="1348" y="373">60</text>
+                  <text x="1450" y="373">120</text>
+                </g>
+                <text x="1348" y="386" font-size="9.5" font-weight="500" fill="var(--text-secondary)" text-anchor="middle">Months after entry</text>
+
+                <!-- Subtle Shaded Area for 55 Other Conditions -->
+                <path d="M 1246 360 Q 1348 356 1450 349 L 1450 360 Z" fill="var(--slate)" opacity="0.14"/>
+
+                <!-- 6 Cumulative incidence curves, revealed by a time sweep -->
+                <g clip-path="url(#cr-sweep-clip)">
+                <path d="M 1246 360 Q 1300 340 1348 314.5 T 1450 255" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M 1246 360 Q 1300 348 1348 333.4 T 1450 297" fill="none" stroke="var(--navy)" stroke-width="1.8" stroke-dasharray="4 3" stroke-linecap="round"/>
+                <path d="M 1246 360 Q 1300 350 1348 336.9 T 1450 304" fill="none" stroke="var(--diag)" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M 1246 360 Q 1300 352 1348 343.2 T 1450 318" fill="none" stroke="var(--teal)" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M 1246 360 Q 1300 356 1348 351.6 T 1450 339" fill="none" stroke="var(--olive)" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M 1246 360 Q 1300 357 1348 354.4 T 1450 346" fill="none" stroke="var(--purple)" stroke-width="1.6" stroke-linecap="round"/>
+                </g>
+
+                <!-- Dots at Month 60 (5 y) -->
+                <g class="cr-legend-pop">
+                  <circle cx="1348" cy="314.5" r="3.2" fill="var(--accent)"/>
+                  <circle cx="1348" cy="333.4" r="2.6" fill="var(--navy)"/>
+                  <circle cx="1348" cy="336.9" r="2.6" fill="var(--diag)"/>
+                  <circle cx="1348" cy="343.2" r="2.5" fill="var(--teal)"/>
+                  <circle cx="1348" cy="351.6" r="2.3" fill="var(--olive)"/>
+                  <circle cx="1348" cy="354.4" r="2.3" fill="var(--purple)"/>
+                </g>
+
+                <!-- Aligned Legend Directly Under Plot -->
+                <g class="cr-legend-pop" font-size="9.8">
+                  <text x="1454" y="403" font-size="8.8" font-weight="700" fill="var(--text-muted)" text-anchor="end">10-y risk</text>
+
+                  <line x1="1226" y1="416" x2="1240" y2="416" stroke="var(--accent)" stroke-width="2.2"/>
+                  <text x="1246" y="419" font-weight="600" fill="var(--text-primary)">Ischaemic heart diseases</text>
+                  <text x="1454" y="419" class="cr-mono" font-weight="700" fill="var(--accent)" text-anchor="end">15%</text>
+
+                  <line x1="1226" y1="434" x2="1240" y2="434" stroke="var(--navy)" stroke-width="1.8" stroke-dasharray="3 2"/>
+                  <text x="1246" y="437" font-weight="600" fill="var(--text-primary)">Death (competing event)</text>
+                  <text x="1454" y="437" class="cr-mono" font-weight="700" fill="var(--navy)" text-anchor="end">9%</text>
+
+                  <line x1="1226" y1="452" x2="1240" y2="452" stroke="var(--diag)" stroke-width="1.8"/>
+                  <text x="1246" y="455" fill="var(--text-primary)">Diabetes</text>
+                  <text x="1454" y="455" class="cr-mono" font-weight="700" fill="var(--diag)" text-anchor="end">8%</text>
+
+                  <line x1="1226" y1="470" x2="1240" y2="470" stroke="var(--teal)" stroke-width="1.8"/>
+                  <text x="1246" y="473" fill="var(--text-primary)">Disorders of bone density and structure</text>
+                  <text x="1454" y="473" class="cr-mono" font-weight="700" fill="var(--teal)" text-anchor="end">6%</text>
+
+                  <line x1="1226" y1="488" x2="1240" y2="488" stroke="var(--olive)" stroke-width="1.6"/>
+                  <text x="1246" y="491" fill="var(--text-primary)">Diseases of the liver</text>
+                  <text x="1454" y="491" class="cr-mono" font-weight="700" fill="var(--olive)" text-anchor="end">3%</text>
+
+                  <line x1="1226" y1="506" x2="1240" y2="506" stroke="var(--purple)" stroke-width="1.6"/>
+                  <text x="1246" y="509" fill="var(--text-primary)">Psoriasis</text>
+                  <text x="1454" y="509" class="cr-mono" font-weight="700" fill="var(--purple)" text-anchor="end">2%</text>
+
+                  <rect x="1226" y="521" width="14" height="5" rx="1" fill="var(--slate)" opacity="0.3"/>
+                  <text x="1246" y="526" font-size="9.2" fill="var(--text-muted)">53 other conditions</text>
+
+                  <text x="1226" y="554" font-size="8.8" fill="var(--text-muted)">Synthetic patient · risk from month 6 after index</text>
+                </g>
+              </g>
+            </g>
+          </svg>
