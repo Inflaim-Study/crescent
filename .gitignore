@@ -42,3 +42,4 @@ data/restricted/
 .DS_Store
 .idea/
 .vscode/
+figures/*/output/

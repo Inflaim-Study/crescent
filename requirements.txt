@@ -7,3 +7,6 @@ pandas
 scikit-learn
 joblib
 numba        # optional, speeds up the bootstrap
+matplotlib   # figures
+scipy        # Fig. 2 Wilcoxon and Friedman tests
+pillow       # Fig. 3 PNG/TIFF export
