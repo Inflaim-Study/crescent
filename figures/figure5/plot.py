@@ -6,11 +6,11 @@ no UK Biobank access is needed.
 
     python figures/figure5/plot.py
 
-Panels e and f show two individual test participants. Their tables are not published, so the
-public `source_data/` redraws panels a-d and the extended-data figures; with the patient tables
-from approved storage in `source_data/` (FIG5_EXPORT_DIR), the full figure is drawn.
+Panels e and f show two synthetic example patients (profiles with status "synthetic": no real
+participant identifiers or observed outcomes, so the outcome lane is omitted). If the patient
+tables are not in `source_data/`, panels a-d and the extended-data figures are still drawn.
 
-Code from the notebook `Fig5_plotting_v2`, cells copied unchanged with cell numbers kept, apart
+Code from the notebook `Fig5_plotting_v2_two_synthetic`, cells copied unchanged with cell numbers kept, apart
 from three marked lines: default folders (cell 2), the manifest check for the absent patient
 tables (cell 4), and drawing without panels e, f when those tables are absent (cell 11).
 `source_data/` is filled by `collect_source_data.py`.
@@ -685,56 +685,70 @@ def tidy_token(text, width=22):
 
 
 def patient_panel(fig, tax, rax, sax, row):
-    """Patient profile on a real-age axis: predicted risk ahead, the outcome, diagnoses as labelled stems,
-    lifestyle records and CRP values, with the landmark, entry delay and prediction window marked."""
+    """Patient profile on a real-age axis: diagnoses as labelled stems, lifestyle records and CRP values,
+    with the landmark, entry delay and prediction window marked; beside it, predicted risk across horizons
+    and exact 8-group Shapley contributions. Omits observed outcome lane for synthetic profiles."""
     profile = PROFILES[PROFILES.panel_row.eq(row)].iloc[0]
     events = TIMELINES[TIMELINES.panel_row.eq(row)].copy()
     risks = RISKS[RISKS.panel_row.eq(row)].sort_values("horizon_years_after_lead")
+    is_synthetic = str(profile.status).lower() == "synthetic"
+
     landmark = float(profile.age_years)
     entry_age = float(profile.lead_end_age_years)
-    window_years = manifest["patients"]["horizon_months"] / 12
+    window_years = manifest["patients"]["horizon_months"] / 12.0
     events["age"] = events.event_age_years
     events = events[events.lookback_years <= PATIENT_LOOKBACK_YEARS]
+
     x_start = np.floor(min(events.age.min() if len(events) else landmark - 5, landmark - 3)) - 0.5
-    window_years = manifest["patients"]["horizon_months"] / 12
     x_end = entry_age + window_years + 1.0                       # longer horizons are in the risk plot beside it
-    if profile.status == "event" and np.isfinite(profile.target_event_age_years):
-        x_end = max(x_end, profile.target_event_age_years + 1.0)
-    # Lanes, top to bottom: (key, label, height).
-    lanes = [("outcome", f"{PATIENT_TARGET}", 0.6), ("dx", "Diagnoses", 1.6)]
-    lanes += [(d, d if d != "CRP" else "CRP (mg/L)", 0.55) for d in ("BMI", "Smoking", "Alcohol", "CRP") if events.domain.eq(d).any()]
+    if not is_synthetic and profile.status == "event" and np.isfinite(profile.target_event_age_years):
+        x_end = max(x_end, float(profile.target_event_age_years) + 1.0)
+
+    # Lanes, top to bottom: omit observed outcome lane for synthetic profiles.
+    lanes = ([] if is_synthetic else [("outcome", f"{PATIENT_TARGET}", 0.6)]) + [("dx", "Diagnoses", 1.6)]
+    lanes += [(d, d if d != "CRP" else "CRP (mg/L)", 0.55)
+              for d in ("BMI", "Smoking", "Alcohol", "CRP") if events.domain.eq(d).any()]
+
     top, centres = 0.0, {}
     for key, label, height in lanes:
         centres[key] = (top, top + height)
         top += height
-    lane_mid = {k: (a + b) / 2 for k, (a, b) in centres.items()}
+    lane_mid = {k: (a + b) / 2.0 for k, (a, b) in centres.items()}
+
     # Context: entry delay, prediction window, landmark.
     tax.axvspan(landmark, entry_age, color="#ecebe6", linewidth=0, zorder=0)
     tax.axvspan(entry_age, entry_age + window_years, color="#eaf2fc", linewidth=0, zorder=0)
     tax.axvline(landmark, color=INK, linewidth=0.7, zorder=2)
     tax.annotate(f"Landmark {landmark:.1f} y", (landmark, 0), xytext=(-2, 2), textcoords="offset points",
                  ha="right", va="bottom", fontsize=FONT_SIZE - 2, color=INK, annotation_clip=False)
-    tax.annotate(f"{window_years:.0f}-year window", (entry_age + window_years / 2, 0), xytext=(0, 2), textcoords="offset points",
-                 ha="center", va="bottom", fontsize=FONT_SIZE - 2, color="#184f95", annotation_clip=False)
+    tax.annotate(f"{window_years:.0f}-year window", (entry_age + window_years / 2.0, 0), xytext=(0, 2),
+                 textcoords="offset points", ha="center", va="bottom", fontsize=FONT_SIZE - 2,
+                 color="#184f95", annotation_clip=False)
     for key, (a, b) in list(centres.items())[1:]:
         tax.axhline(a, color="#e4e3de", linewidth=0.4, zorder=0)
+
     events["short"] = [abbr if isinstance(abbr, str) and abbr else tidy_token(label, 14)
                        for abbr, label in zip(events.get("abbreviation", pd.Series([None] * len(events), index=events.index)),
                                               events.display_label)]
-    # Outcome.
-    y = lane_mid["outcome"]
-    if profile.status == "event" and np.isfinite(profile.target_event_age_years):
-        tax.scatter([profile.target_event_age_years], [y], marker="*", s=42, color="#d03b3b", edgecolors="white",
-                    linewidths=0.3, zorder=4)
-        tax.annotate(f"{PATIENT_TARGET} at {profile.target_event_age_years:.1f} y", (profile.target_event_age_years, y),
-                     xytext=(5, 0), textcoords="offset points", ha="left", va="center", fontsize=FONT_SIZE - 2, color="#d03b3b")
-    else:
-        tax.annotate("none in window", (entry_age + window_years / 2, y), ha="center", va="center",
-                     fontsize=FONT_SIZE - 2.5, color=MUTED)
-    if np.isfinite(profile.follow_up_end_age_years) and profile.follow_up_end_age_years < x_end:
-        tax.plot([profile.follow_up_end_age_years] * 2, list(centres["outcome"]), color=MUTED, linewidth=0.6)
-        tax.annotate("end of follow-up", (profile.follow_up_end_age_years, centres["outcome"][0]), xytext=(-2, -1),
-                     textcoords="offset points", ha="right", va="top", fontsize=FONT_SIZE - 3, color=MUTED)
+
+    # Outcome (real participants only).
+    if not is_synthetic:
+        y = lane_mid["outcome"]
+        if profile.status == "event" and np.isfinite(profile.target_event_age_years):
+            tax.scatter([profile.target_event_age_years], [y], marker="*", s=42, color="#d03b3b", edgecolors="white",
+                        linewidths=0.3, zorder=4)
+            tax.annotate(f"{PATIENT_TARGET} at {profile.target_event_age_years:.1f} y",
+                         (profile.target_event_age_years, y), xytext=(5, 0), textcoords="offset points",
+                         ha="left", va="center", fontsize=FONT_SIZE - 2, color="#d03b3b")
+        else:
+            tax.annotate("none in window", (entry_age + window_years / 2.0, y), ha="center", va="center",
+                         fontsize=FONT_SIZE - 2.5, color=MUTED)
+        if np.isfinite(profile.follow_up_end_age_years) and profile.follow_up_end_age_years < x_end:
+            tax.plot([profile.follow_up_end_age_years] * 2, list(centres["outcome"]), color=MUTED, linewidth=0.6)
+            tax.annotate("end of follow-up", (profile.follow_up_end_age_years, centres["outcome"][0]),
+                         xytext=(-2, -1), textcoords="offset points", ha="right", va="top",
+                         fontsize=FONT_SIZE - 3, color=MUTED)
+
     # Diagnoses: stems with labels at up to three heights, chosen so labels never overlap.
     a, b = centres["dx"]
     dx = events[events.domain.eq("Diagnosis")].sort_values("age")
@@ -743,18 +757,17 @@ def patient_panel(fig, tax, rax, sax, row):
     labelled = dx.drop_duplicates("short", keep="last").tail(PATIENT_MAX_DX_LABELS)
     fig.canvas.draw()
     units_per_pt = (x_end - x_start) / (tax.get_window_extent().width * 72 / fig.dpi)
-    char_w = (FONT_SIZE - 2.3) * 0.68 * units_per_pt        # bold capitals are wide
-    levels = [b - 0.55, b - 0.95, b - 1.35, b - 1.75][:3]             # label rows, nearest the markers first
+    char_w = (FONT_SIZE - 2.3) * 0.68 * units_per_pt
+    levels = [b - 0.55, b - 0.95, b - 1.35, b - 1.75][:3]
     right_edge = [-np.inf] * len(levels)
     gap = 1.5 * char_w
-    for age, text in zip(labelled.age, labelled.short):
+    for age_val, text in zip(labelled.age, labelled.short):
         width = len(text) * char_w
-        # Row needing the smallest shift to the right; the label then starts where that row is free.
-        level = int(np.argmin([max(0.0, edge + gap - age) for edge in right_edge]))
-        x_text = max(age, right_edge[level] + gap)
+        level = int(np.argmin([max(0.0, edge + gap - age_val) for edge in right_edge]))
+        x_text = max(age_val, right_edge[level] + gap)
         right_edge[level] = x_text + width
         y_text = levels[level]
-        tax.plot([age, age, x_text], [b - 0.15, y_text + 0.12, y_text + 0.12] if x_text > age + 1e-9 else [b - 0.15, y_text + 0.12, y_text + 0.12],
+        tax.plot([age_val, age_val, x_text], [b - 0.15, y_text + 0.12, y_text + 0.12],
                  color=colour, linewidth=0.45, alpha=0.55, zorder=3, solid_joinstyle="miter")
         tax.annotate(text, (x_text, y_text), xytext=(0.5, -0.5), textcoords="offset points", ha="left", va="center",
                      fontsize=FONT_SIZE - 2.3, color=colour, fontweight="bold", zorder=6,
@@ -763,6 +776,7 @@ def patient_panel(fig, tax, rax, sax, row):
     if hidden > 0:
         tax.annotate(f"+{hidden} more", (x_start, a), xytext=(2, -2), textcoords="offset points", ha="left", va="top",
                      fontsize=FONT_SIZE - 3, color=MUTED)
+
     # Lifestyle records and CRP: value labels beside each record.
     for domain in ("BMI", "Smoking", "Alcohol", "CRP"):
         if domain not in centres:
@@ -771,10 +785,11 @@ def patient_panel(fig, tax, rax, sax, row):
         rows = events[events.domain.eq(domain)].sort_values("age")
         tax.scatter(rows.age, np.full(len(rows), y), s=10, marker="s" if domain == "CRP" else "o",
                     color=DOMAIN_COLOUR[domain], edgecolors="white", linewidths=0.4, zorder=4)
-        for age, label, value in zip(rows.age, rows.display_label, rows.raw_value):
+        for age_val, label, value in zip(rows.age, rows.display_label, rows.raw_value):
             text = f"{value:.1f}" if domain == "CRP" and np.isfinite(value) else tidy_token(label, 14)
-            tax.annotate(text, (age, y), xytext=(-3.5, 0), textcoords="offset points", ha="right", va="center",
+            tax.annotate(text, (age_val, y), xytext=(-3.5, 0), textcoords="offset points", ha="right", va="center",
                          fontsize=FONT_SIZE - 2.5, color=INK2)
+
     tax.set_yticks([lane_mid[k] for k, _, _ in lanes], [label for _, label, _ in lanes])
     for tick, (key, _, _) in zip(tax.get_yticklabels(), lanes):
         tick.set_color("#d03b3b" if key == "outcome" else ("#184f95" if key == "risk" else INK))
@@ -782,22 +797,31 @@ def patient_panel(fig, tax, rax, sax, row):
     tax.set_ylim(top, 0); tax.set_xlim(x_start, x_end)
     tax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(5)); tax.xaxis.set_minor_locator(mpl.ticker.MultipleLocator(1))
     tax.set_xlabel("Age (years)", labelpad=1)
+
     if "condition_name" in labelled and labelled.condition_name.notna().any():
         key = "; ".join(f"{a}, {str(n).lower() if not str(n).isupper() else n}" for a, n in
                         dict(zip(labelled.short, labelled.condition_name)).items() if isinstance(n, str))
-        width_chars = int(tax.get_window_extent().width * 72 / fig.dpi / ((FONT_SIZE - 2.5) * 0.47))
+        width_chars = max(20, int(tax.get_window_extent().width * 72 / fig.dpi / ((FONT_SIZE - 2.5) * 0.47)))
         tax.annotate("\n".join(textwrap.wrap(key, width_chars)), (0, 0), xycoords="axes fraction", xytext=(0, -20),
                      textcoords="offset points", ha="left", va="top", fontsize=FONT_SIZE - 2.5, color=MUTED)
     despine(tax, left=False)
-    # Header: who this is.
+
+    # Header: synthetic vs real participant.
     sex = SEX_LABELS.get(f"code {int(profile.recorded_sex_code)}", f"sex code {int(profile.recorded_sex_code)}")
-    outcome = (f"developed {PATIENT_TARGET} at {profile.target_event_age_years:.0f} y" if profile.status == "event"
-               else f"no {PATIENT_TARGET} within {window_years:.0f} y")
-    tax.annotate(f"{sex}, {landmark:.0f} y — {outcome}", (0, 1), xycoords="axes fraction", xytext=(0, 11),
+    if is_synthetic:
+        idx_num = str(row).lstrip("D")
+        header = f"Synthetic patient {idx_num} ({sex}, {landmark:.1f} y)"
+    else:
+        outcome = (f"developed {PATIENT_TARGET} at {profile.target_event_age_years:.0f} y" if profile.status == "event"
+                   else f"no {PATIENT_TARGET} within {window_years:.0f} y")
+        header = f"{sex}, {landmark:.0f} y — {outcome}"
+    tax.annotate(header, (0, 1), xycoords="axes fraction", xytext=(0, 11),
                  textcoords="offset points", ha="left", va="bottom", fontsize=FONT_SIZE - 0.5, color=INK, fontweight="bold")
     events["t"] = events.age - landmark
+
     # --- Attribution column: predicted risk by horizon, then Shapley contributions ---
-    years = risks.horizon_years_after_lead.to_numpy(float); risk_pct = 100 * risks.predicted_target_risk.to_numpy(float)
+    years = risks.horizon_years_after_lead.to_numpy(float)
+    risk_pct = 100.0 * risks.predicted_target_risk.to_numpy(float)
     rax.plot(years, risk_pct, color="#184f95", linewidth=1.0, marker="o", markersize=3.2, markerfacecolor="white",
              markeredgewidth=0.8, zorder=3)
     rax.fill_between(years, 0, risk_pct, color="#2a78d6", alpha=0.1, linewidth=0)
@@ -809,6 +833,7 @@ def patient_panel(fig, tax, rax, sax, row):
     rax.set_ylabel("Risk (%)", fontsize=FONT_SIZE - 1.5)
     rax.set_title(f"Predicted {PATIENT_TARGET} risk after entry", loc="left", fontsize=FONT_SIZE - 1, fontweight="bold", pad=2)
     despine(rax)
+
     s = SHAP[SHAP.panel_row.eq(row)].copy()
     s = s.reindex(s.shapley_pp.abs().sort_values(ascending=False).index)
     y = np.arange(len(s))
@@ -825,6 +850,7 @@ def patient_panel(fig, tax, rax, sax, row):
                   loc="left", fontsize=FONT_SIZE - 1, fontweight="bold", pad=2)
     sax.set_xlabel("Contribution (pp)", fontsize=FONT_SIZE - 1.5)
     despine(sax, left=False)
+
     SOURCE[f"patient_{row}"] = s.assign(**{k: profile[k] for k in ("age_years", "recorded_sex_code", "status", "observed_risk", "reference_risk")})
     SOURCE[f"patient_{row}_timeline"] = events
 
@@ -1006,7 +1032,7 @@ def legend_text(h):
            if cal is not None and len(cal) >= 3 else float("nan"))
     windows = manifest["lookback_windows_years"]
     text = f"""
-Fig. 5 | From population patterns to individual patients. a, For every prior diagnosis (rows) and outcome (columns, plus death), the mean change in predicted {years}-year risk when the diagnosis is removed from the history, among test participants who had it (n = {manifest['n_test_participants']:,} test participants), shown separately for women and men; rows and columns are ordered and coloured by ICD-10 chapter; white, too few participants to show. Strongest risk ratios among the highlighted conditions (extended data): {pairs}. b, For each pair of the highlighted conditions, the age- and sex-standardised risk ratio with vs without the prior diagnosis: observed in the test set (x; inverse-probability-of-censoring weighted, horizontal lines 95% intervals) against the model's prediction (y); point size, number of outcome events; pairs with fewer than {B_MIN_EVENTS} events omitted; line of identity shown (Spearman ρ = {rho:.2f}; event-weighted slope of log predicted on log observed {SLOPES.get(h, float('nan')):.2f}). c, Accumulated local effect of landmark age on {years}-year risk, centred at the training-median age ({REF_AGE:.0f} years); the history is shifted with age so event timing relative to the landmark is kept; coloured lines are the outcomes with the largest effect (95% intervals shaded). d, Risk ratio when diagnoses recorded in each lookback window are removed, among participants with a diagnosis in that window (top, share of participants); dots, conditions; line, geometric mean; diamonds, death. e, f, Two test participants: recorded history before the landmark (CRP values in mg/L), the 6-month entry delay (grey) and the {manifest['patients']['horizon_months'] // 12}-year prediction window (blue), predicted {PATIENT_TARGET} risk at 2, 5 and 10 years, and exact Shapley contributions of eight input groups (sex held as observed) to the {manifest['patients']['horizon_months'] // 12}-year risk. Intervals: {boot['n']} participant bootstrap resamples (percentile, {100 * (1 - boot['alpha']):.0f}%).
+Fig. 5 | From population patterns to individual patients. a, For every prior diagnosis (rows) and outcome (columns, plus death), the mean change in predicted {years}-year risk when the diagnosis is removed from the history, among test participants who had it (n = {manifest['n_test_participants']:,} test participants), shown separately for women and men; rows and columns are ordered and coloured by ICD-10 chapter; white, too few participants to show. Strongest risk ratios among the highlighted conditions (extended data): {pairs}. b, For each pair of the highlighted conditions, the age- and sex-standardised risk ratio with vs without the prior diagnosis: observed in the test set (x; inverse-probability-of-censoring weighted, horizontal lines 95% intervals) against the model's prediction (y); point size, number of outcome events; pairs with fewer than {B_MIN_EVENTS} events omitted; line of identity shown (Spearman ρ = {rho:.2f}; event-weighted slope of log predicted on log observed {SLOPES.get(h, float('nan')):.2f}). c, Accumulated local effect of landmark age on {years}-year risk, centred at the training-median age ({REF_AGE:.0f} years); the history is shifted with age so event timing relative to the landmark is kept; coloured lines are the outcomes with the largest effect (95% intervals shaded). d, Risk ratio when diagnoses recorded in each lookback window are removed, among participants with a diagnosis in that window (top, share of participants); dots, conditions; line, geometric mean; diamonds, death. e, f, Two illustrative synthetic patients (no real participant identifiers or observed outcomes): synthetic history before the landmark (CRP values in mg/L), the 6-month entry delay (grey) and the {manifest['patients']['horizon_months'] // 12}-year prediction window (blue), predicted {PATIENT_TARGET} risk at 2, 5 and 10 years, and exact Shapley contributions of eight input groups (sex held as observed) to the {manifest['patients']['horizon_months'] // 12}-year risk. Intervals: {boot['n']} participant bootstrap resamples (percentile, {100 * (1 - boot['alpha']):.0f}%).
 """
     return textwrap.fill(" ".join(text.split()), 110)
 

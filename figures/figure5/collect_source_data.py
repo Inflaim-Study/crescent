@@ -1,13 +1,16 @@
 """Copy the Fig. 5 export from `runs/explainability/figure5/` into `figures/figure5/source_data/`.
 
-    python figures/figure5/collect_source_data.py
+    python figures/figure5/collect_source_data.py [--include-synthetic-patients]
 
 The export (manifest.json and the CSVs it lists) is written by the Fig. 5 data generator in
 `explainability/` into the repository's `runs/` folder (git-ignored; see figures/README.md).
 Set CRESCENT_RUNS_DIR to read it from another location.
 
-The four `fig5D_patient_*` tables describe two individual test participants (panels e, f) and
-are never copied; plot.py draws panels a-d and the extended-data figures without them.
+The four `fig5D_patient_*` tables hold the two example patients of panels e, f. They are left out
+unless --include-synthetic-patients is given, and even then only if every profile has status
+"synthetic". The notebook describes them as age-shifted; if they are derived from real test
+records, confirm with UK Biobank that they can be released before using the option. Without them, plot.py still draws
+panels a-d and the extended-data figures.
 
 Absolute machine paths in manifest.json are reduced to file names; the file hashes that plot.py
 checks are unchanged. The script stops if a table has an `eid` column, and lists any count between
@@ -33,7 +36,12 @@ PATIENT_FILES = {"fig5D_patient_profiles.csv", "fig5D_patient_shapley.csv",
 
 
 def restricted_files():
-    return set(PATIENT_FILES)
+    if "--include-synthetic-patients" not in sys.argv[1:]:
+        return set(PATIENT_FILES)
+    status = pd.read_csv(EXPORT / "fig5D_patient_profiles.csv").status.astype(str).str.lower()
+    if not status.eq("synthetic").all():
+        sys.exit("STOP: not every patient profile has status 'synthetic'; patient tables not copied.")
+    return set()
 
 _ABSOLUTE = re.compile(r"^(/|~|[A-Za-z]:[\\\\/]|\\\\\\\\)")
 
@@ -83,7 +91,7 @@ def main():
     (DEST / "manifest.json").write_text(json.dumps(strip_paths(manifest), indent=2), encoding="utf-8")
     print("copied manifest.json (machine paths removed)")
     for name in sorted(restricted & set(manifest["files"])):
-        print("NOT copied (participant-level):", name)
+        print("NOT copied (patient tables):", name)
     if notes:
         print("\\nSmall counts to review before committing:")
         print("\\n".join("  " + line for line in notes))

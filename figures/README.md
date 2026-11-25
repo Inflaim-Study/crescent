@@ -62,4 +62,5 @@ Not published:
 - the Fig. 4 sampled participant–condition contributions (`fig4D_beeswarm_points.csv`), unless
   UK Biobank agrees (`--include-sampled-points`); `plot.py` needs this file for the
   individual-contribution panel;
-- the Fig. 5e–f patient tables; `plot.py` then draws panels a–d and the extended-data figures.
+- the Fig. 5e–f patient tables, unless `--include-synthetic-patients` is given and every profile
+  is marked synthetic; without them `plot.py` draws panels a–d and the extended-data figures.
