@@ -1,15 +1,18 @@
-"""Fig. 4: input contributions to predicted risk (Shapley attributions and lifestyle contrasts).
+"""Fig. 4: input contributions to predicted risk (Shapley attributions, lifestyle contrasts and
+predicted-risk curves across CRP and Townsend deprivation).
 
-Redraws manuscript Fig. 4 and its supplementary figure from the export in `source_data/` and
+Redraws manuscript Fig. 4 and its supplementary figures from the export in `source_data/` and
 writes PDF, SVG, PNG, captions, source-data workbook and a figure manifest to `output/`.
 No model is loaded and no UK Biobank access is needed.
 
     python figures/figure4/plot.py
 
-Plot settings are environment variables (FIG4_LAYOUT, FIG4_BEESWARM_AXIS, FIG4_VALUE_RAMP, ...),
-as listed in the notebook `Fig4_plot_explainability_medians_v4`. Its cells are copied unchanged,
-with cell numbers kept, apart from the default input and output folders in cell 2.
-`source_data/` is filled by `collect_source_data.py`.
+Plot settings are environment variables (FIG4_PANEL_E, FIG4_FONT_SIZE, FIG4_FONT_PATH, FIG4_LAYOUT,
+FIG4_BEESWARM_AXIS, FIG4_VALUE_RAMP, FIG4_DOSE_SUPPLEMENT, ...), as listed in the notebook
+`Fig4_plot_explainability_v6`. Its cells are copied unchanged, with cell numbers kept, apart from the
+default input and output folders in cell 2 and the optional dose-response supplement in cell 16.
+`source_data/` is filled by `collect_source_data.py` from an export written by the v5 data generator
+(export schema crescent.fig4.explainability.v4).
 """
 import os
 from pathlib import Path
@@ -43,6 +46,14 @@ import pandas as pd
 # Repository paths: the export is read from source_data/ and figures are written to output/.
 EXPORT_DIR = Path(os.getenv("FIG4_EXPORT_DIR", str(HERE / "source_data"))).expanduser().resolve()
 FIGURE_DIR = Path(os.getenv("FIG4_FIGURE_DIR", str(HERE / "output"))).expanduser().resolve()
+
+
+def display_path(path):
+    """Folder name for logs and provenance: relative to this script, never an absolute machine path."""
+    try:
+        return str(Path(path).resolve().relative_to(HERE))
+    except ValueError:
+        return Path(path).name
 BEE_AXIS_SETTING = os.getenv("FIG4_BEESWARM_AXIS", "auto").strip().lower()
 BEE_LINEAR_THRESHOLD_SETTING = os.getenv("FIG4_BEESWARM_LINEAR_THRESHOLD_PP", "auto").strip().lower()
 BEE_LINEAR_WIDTH_SETTING = os.getenv("FIG4_BEESWARM_LINEAR_WIDTH_PP", "auto").strip().lower()
@@ -52,8 +63,18 @@ LAYOUT = os.getenv("FIG4_LAYOUT", "paired").strip().lower()
 if LAYOUT not in {"paired", "stacked"}:
     raise ValueError("FIG4_LAYOUT must be 'paired' or 'stacked'.")
 # Panel letters by layout. Paired puts overall and individual contributions side by side on shared rows.
+PANEL_E_MODE = os.getenv("FIG4_PANEL_E", "main").strip().lower()
+if PANEL_E_MODE not in {"main", "supplement"}:
+    raise ValueError("FIG4_PANEL_E must be 'main' or 'supplement'.")
+if LAYOUT == "stacked" and PANEL_E_MODE == "main":
+    print("Stacked layout has no room for panel e; the curves go to the supplementary figure.")
+    PANEL_E_MODE = "supplement"
+E_END_LABELS = os.getenv("FIG4_E_END_LABELS", "1") != "0"
+# Upper-case bold panel letters (npj asks for lower case; switch back for submission if needed).
 LETTERS = {"paired": {"overall": "A", "individual": "B", "direction": "C", "lifestyle": "D"},
            "stacked": {"overall": "A", "direction": "B", "lifestyle": "C", "individual": "D"}}[LAYOUT]
+if PANEL_E_MODE == "main":
+    LETTERS["curves"] = "E"
 BEE_AUTO_TAIL_RATIO = 8.0
 if BEE_AXIS_SETTING not in {"auto", "asinh", "linear", "symlog"}:
     raise ValueError("FIG4_BEESWARM_AXIS must be 'auto', 'asinh', 'linear' or 'symlog'.")
@@ -81,8 +102,8 @@ if not manifest_path.is_file():
                             + (f"\nCompleted exports next to it: {others}" if others else ""))
 MANIFEST_SHA256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-if manifest.get("schema") != "crescent.fig4.explainability.v3":
-    raise ValueError("Use the v3 exports from Fig4_generate_explainability_data_medians.ipynb.")
+if manifest.get("schema") != "crescent.fig4.explainability.v4":
+    raise ValueError("Use the v4 exports from Fig4_generate_explainability_data_medians_v5.ipynb (panel e).")
 
 
 def load_table(filename, required=True):
@@ -107,6 +128,8 @@ SHARE = load_table("fig4A_attribution_share_sensitivity.csv", required=False)
 BRIER = load_table("evaluation_ipcw_brier_reference_edit.csv", required=False)
 AGE_AUDIT = load_table("audit_shifted_diagnosis_ages.csv", required=False)
 AGE_TAILS = load_table("audit_age_attribution_tails.csv", required=False)
+E = load_table("fig4E_dose_response.csv")
+E_DIST = load_table("fig4E_input_distribution.csv")
 
 DISPLAY_CONDITIONS = manifest["illustrative_condition_ids"]
 # Conditions the beeswarm sample was drawn from: every fitted condition in current exports,
@@ -159,6 +182,26 @@ def beeswarm_axis(h):
 
 BEE_AXIS = {h: beeswarm_axis(h) for h in HORIZONS}
 
+# ---- Panel e inputs ----
+E_SPEC = manifest["dose_response"]
+E_HORIZON = int(E_SPEC["horizon_months"])
+E_CONDITIONS = [int(k) for k in E_SPEC["conditions"]]
+E_FAMILIES = set(E.family.unique())
+E_TOWNSEND_FAMILY = "townsend_paired"
+if not {"crp", E_TOWNSEND_FAMILY} <= E_FAMILIES:
+    raise ValueError(f"Panel e needs crp and {E_TOWNSEND_FAMILY} sweeps; found {sorted(E_FAMILIES)}.")
+if E_HORIZON not in HORIZONS:
+    raise ValueError("Panel e horizon is not among the exported horizons.")
+if not set(E_CONDITIONS) <= set(E.condition_id):
+    raise ValueError("Panel e conditions are missing from the dose-response table.")
+if E.loc[E.is_reference.astype(bool), "diff_vs_median_pp"].abs().max() != 0:
+    raise ValueError("Panel e curves are not zero at the training median.")
+for family, part in E.loc[E.horizon_months.eq(E_HORIZON)].groupby("family"):
+    if part.loc[part.is_reference.astype(bool), "value"].nunique() != 1:
+        raise ValueError(f"{family}: expected one training-median grid value.")
+print("Panel e:", PANEL_E_MODE, "| conditions", [CONDITION_LABELS[k] for k in E_CONDITIONS],
+      "|", E_SPEC.get("selection_rule", ""))
+
 
 def linear_threshold(h):
     """Half-width of the linear centre of the symlog axis.
@@ -195,8 +238,8 @@ def asinh_linear_width(h):
 
 BEE_ASINH_WIDTH = {h: asinh_linear_width(h) for h in HORIZONS}
 FIGURE_DIR.mkdir(parents=True, exist_ok=True)
-print("Reading:", EXPORT_DIR, "| manifest", MANIFEST_SHA256[:12], "| created", manifest.get("created_utc"))
-print("Writing:", FIGURE_DIR)
+print("Reading:", display_path(EXPORT_DIR), "| manifest", MANIFEST_SHA256[:12], "| created", manifest.get("created_utc"))
+print("Writing:", display_path(FIGURE_DIR))
 print("Panel D scale check (sampled non-zero contributions, pp):")
 print(D_SUMMARY[["horizon_months", "group", "nonzero_sample_p01_pp", "nonzero_sample_p99_pp",
                  "zero_fraction_eligible_equal_condition_weight"]].round(3).to_string(index=False))
@@ -211,9 +254,16 @@ for h, (scale, reason) in BEE_AXIS.items():
 # Notebook cell 4
 # =============================================================================
 
-FONT_SIZE = 7
-SMALLEST = 5          # floor for any text in the figure
+FONT_SIZE = float(os.getenv("FIG4_FONT_SIZE", "8"))   # npj: 8 pt is optimal at print size
+SMALLEST = FONT_SIZE - 2                                # floor for any text in the figure
+PANEL_LETTER_SIZE = FONT_SIZE + 4                       # bold panel letters
 FIGURE_WIDTH_IN = 180 / 25.4
+# Register Arial if available (npj asks for Arial/Helvetica); set FIG4_FONT_PATH to the .ttf file.
+_font_path = os.getenv("FIG4_FONT_PATH")
+if _font_path:
+    from matplotlib import font_manager
+    font_manager.fontManager.addfont(_font_path)
+    print("Registered font:", font_manager.FontProperties(fname=_font_path).get_name())
 mpl.rcParams.update({
     "font.family": "sans-serif", "font.sans-serif": ["Arial", "Helvetica", "Liberation Sans", "DejaVu Sans"],
     "font.size": FONT_SIZE, "axes.labelsize": FONT_SIZE, "axes.titlesize": FONT_SIZE + 1,
@@ -251,7 +301,16 @@ if VALUE_RAMP_NAME not in VALUE_RAMPS:
     raise ValueError(f"FIG4_VALUE_RAMP must be one of {sorted(VALUE_RAMPS)}.")
 VALUE_RAMP_STOPS = VALUE_RAMPS[VALUE_RAMP_NAME]
 VALUE_RAMP = LinearSegmentedColormap.from_list("recorded_value", VALUE_RAMP_STOPS)
-MISSING_VALUE = "#cfcdd4"   # light neutral, drawn beneath the coloured dots
+MISSING_VALUE = "#9e9ca6"   # mid grey: participant has no recorded value for the input
+RUG, GRID_DARK = "#cfcdd4", "#bdbbc4"
+# Panel e condition colours: kept apart from the input-family colours in a and the blue/red of c and d.
+# Validated with the dataviz palette checker (all pairs, light surface): CVD dE >= 12.7, normal dE >= 19.1,
+# contrast >= 3:1. Markers give a second, colour-free channel.
+E_COLOURS = ["#6f3fb0", "#00a08a", "#b57a00", "#a8324e"]
+E_MARKERS = ["o", "s", "^", "D"]
+if len(E_CONDITIONS) > len(E_COLOURS):
+    raise ValueError(f"Panel e supports up to {len(E_COLOURS)} conditions.")
+E_STYLE = {k: {"colour": c, "marker": m} for k, c, m in zip(E_CONDITIONS, E_COLOURS, E_MARKERS)}
 
 ratios = C.loc[C.condition_id.isin(DISPLAY_CONDITIONS), "risk_ratio"].to_numpy()
 log_ratios = np.log(ratios[np.isfinite(ratios) & (ratios > 0)])
@@ -280,7 +339,7 @@ def trim(ax):
 
 def panel_heading(fig, y, label, x=.052):
     """Bold panel letter only; what each panel shows is stated by its axes and the caption."""
-    fig.text(x, y, label, va="center", color=INK, fontweight="bold", fontsize=FONT_SIZE + 2)
+    fig.text(x, y, label, va="center", color=INK, fontweight="bold", fontsize=PANEL_LETTER_SIZE)
 
 
 def colourbar(fig, ax, cmap, norm, ticks, labels, label, orientation="horizontal"):
@@ -306,11 +365,9 @@ def panel_a(ax, h, headroom=1.3):
              if SHARE is not None else None)
     y = np.arange(len(d))
     point = d.mean_abs_shapley_pp.to_numpy()
-    low, high = d.ci_low_pp.to_numpy(), d.ci_high_pp.to_numpy()
+    # Point summaries of the fitted model; no bootstrap intervals (the model is not refitted).
     ax.barh(y, point, height=.56, color=[GROUP_COLOURS[g] for g in d.index], linewidth=0)
-    has_ci = np.isfinite(low) & np.isfinite(high)
-    ax.hlines(y[has_ci], low[has_ci], high[has_ci], color=INK, linewidth=.7, zorder=3)
-    extent = np.fmax(point, np.where(has_ci, high, point))
+    extent = point
     limit = float(np.nanmax(extent, initial=0)) or 1.0
     places = decimals_for(point)
     for row, group, value, end in zip(y, d.index, point, extent):
@@ -339,28 +396,20 @@ def panel_b(fig, axes, h):
     for ax, group in zip(axes, GROUP_ORDER):
         rows = data.loc[data.group.eq(group)].set_index("condition_id").reindex(DISPLAY_CONDITIONS)
         left, right = rows.mean_negative_pp.to_numpy(), rows.mean_increase_pp.to_numpy()
-        left_lo, left_hi = rows.negative_ci_low_pp.to_numpy(), rows.negative_ci_high_pp.to_numpy()
-        right_lo, right_hi = rows.increase_ci_low_pp.to_numpy(), rows.increase_ci_high_pp.to_numpy()
         net = rows.mean_signed_shapley_pp.to_numpy()
         valid = np.isfinite(left) & np.isfinite(right)
-        reach = np.abs(np.r_[left[valid], right[valid], left_lo[valid], right_hi[valid]])
+        reach = np.abs(np.r_[left[valid], right[valid]])
         extent = float(np.nanmax(reach, initial=0))
         limit = MaxNLocator(nbins=3, steps=[1, 2, 2.5, 5, 10]).tick_values(0, extent * 1.02)[-1] if extent else 1
         if extent:
             # The zero line is drawn, so 0 keeps its tick without a label; end labels never collide.
-            ax.set_xticks([-limit, 0, limit], [f"−{limit:.2g}", "", f"+{limit:.2g}"])
-            ticks = ax.get_xticklabels()
-            ticks[0].set_ha("left")
-            ticks[-1].set_ha("right")
+            ax.set_xticks([-limit, 0, limit], ["", f"±{limit:.2g}", ""])   # one label: no collisions in narrow columns
         else:
             ax.set_xticks([0], ["0"])
         ax.set_xlim(-limit, limit)
         ax.axvline(0, color=RULE, linewidth=.55)
         ax.barh(y[valid], left[valid], color=NEGATIVE, height=.66, linewidth=0)
         ax.barh(y[valid], right[valid], color=POSITIVE, height=.66, linewidth=0)
-        for lo, hi in ((left_lo, left_hi), (right_lo, right_hi)):
-            ok = valid & np.isfinite(lo) & np.isfinite(hi) & (np.abs(hi - lo) > 0)
-            ax.hlines(y[ok], lo[ok], hi[ok], color=INK, linewidth=.45, alpha=.75, zorder=3)
         ax.scatter(net[valid], y[valid], marker="D", s=9, color="white", edgecolors=INK, linewidths=.65, zorder=4)
         both_zero = valid & (left == 0) & (right == 0)
         ax.scatter(np.zeros(both_zero.sum()), y[both_zero], s=4, color=MUTED, linewidths=0, zorder=3)
@@ -416,18 +465,15 @@ def panel_c(fig, axes, cax, h):
         np.log(ratio, out=log_data, where=known)
         ax.imshow(np.ma.masked_invalid(log_data), cmap=RISK_RATIOS, norm=RATIO_NORM, aspect="auto",
                   interpolation="nearest")
-        excludes_one = (values("ratio_ci_low") > 1) | (values("ratio_ci_high") < 1)
         for r, c in zip(*np.nonzero(~known)):
             ax.add_patch(Rectangle((c - .5, r - .5), 1, 1, facecolor="white", edgecolor=GRID,
                                    hatch="//////", linewidth=0, zorder=1))
         for r, c in zip(*np.nonzero(known)):
             background = RISK_RATIOS(RATIO_NORM(log_data[r, c]))
             ink = "white" if luminance(background) < .3 else INK
-            if C_VALUES:
+            if C_VALUES:   # every cell at full strength: no interval-based fading
                 ax.text(c, r, f"{ratio[r, c]:.2f}", ha="center", va="center", fontsize=SMALLEST,
-                        color=ink, alpha=1 if excludes_one[r, c] else .42, zorder=3)
-            elif excludes_one[r, c]:
-                ax.scatter(c, r, s=3, color=ink, linewidths=0, zorder=3)
+                        color=ink, zorder=3)
         ax.set_xticks(np.arange(len(levels)), [LEVEL_SHORT.get(level, level) for level in levels])
         ax.set_yticks(np.arange(len(DISPLAY_CONDITIONS)),
                       [CONDITION_LABELS[k] for k in DISPLAY_CONDITIONS] if i == 0 else [])
@@ -445,7 +491,7 @@ def panel_c(fig, axes, cax, h):
         lower, upper = ticks[ticks < 1], ticks[ticks > 1]
         ticks = np.unique(np.r_[lower[0], lower[len(lower) // 2], 1., upper[len(upper) // 2], upper[-1]])
     colourbar(fig, cax, RISK_RATIOS, RATIO_NORM, np.log(ticks), [f"{tick:g}" for tick in ticks],
-              "Predicted risk ratio", orientation="vertical")
+              "Ratio of mean predicted risks", orientation="vertical")
 
 
 def sina_offsets(x_pt, half_height, seed):
@@ -579,86 +625,230 @@ def panel_d(fig, ax, cax, h, row_labels=True, compact=False):
                    "Shapley contribution (percentage points of predicted risk)")
                   + {"symlog": "  ·  symmetric log axis", "asinh": "  ·  asinh axis"}.get(scale, ""), labelpad=2.5)
     trim(ax)
-    colourbar(fig, cax, VALUE_RAMP, Normalize(0, 1), [0, 1], ["Lower", "Higher"],
-              "Recorded input percentile  ·  light grey: unavailable")
+    colourbar(fig, cax, VALUE_RAMP, Normalize(0, 1), [0, 1], ["Low", "High"],
+              "Participant's value of the input (percentile)")
 
 
 # =============================================================================
 # Notebook cell 10
 # =============================================================================
 
+E_COND = E_CONDITIONS
+
+
+def e_data(h, family):
+    data = E.loc[E.horizon_months.eq(h) & E.family.eq(family)]
+    if data.empty:
+        raise ValueError(f"Panel e has no {family} rows at {h} months.")
+    return data
+
+
+def e_limits(h, families=("crp", E_TOWNSEND_FAMILY)):
+    """Shared y-limits (pp) across the curve plots, always including zero."""
+    values = pd.concat([e_data(h, f).loc[lambda d: d.condition_id.isin(E_COND), "diff_vs_median_pp"]
+                        for f in families if f in E_FAMILIES])
+    lo, hi = min(0.0, float(values.min())), max(0.0, float(values.max()))
+    pad = .08 * (hi - lo or 1)
+    return lo - pad, hi + pad
+
+
+def e_rug(ax, input_name, log):
+    d = E_DIST.loc[E_DIST.input.eq(input_name) & np.isfinite(E_DIST.bin_low) & np.isfinite(E_DIST.bin_high)]
+    counts = d["count"].to_numpy(float)
+    top = np.nanmax(counts) if np.isfinite(counts).any() else 1
+    ok = np.isfinite(counts)
+    ax.bar(d.bin_low.to_numpy()[ok], counts[ok] / top, width=(d.bin_high - d.bin_low).to_numpy()[ok],
+           align="edge", color=RUG, linewidth=0)
+    ax.set_ylim(0, 1.05)
+    ax.set_yticks([])
+    for side in ("top", "right", "left"):
+        ax.spines[side].set_visible(False)
+    ax.spines["bottom"].set_color(RULE)
+    ax.tick_params(axis="x", colors=INK, pad=1.5)
+    if log:
+        ax.set_xscale("log")
+
+
+def e_frame(ax, ylim):
+    ax.set_ylim(*ylim)
+    ax.axhline(0, color=RULE, linewidth=.6, zorder=1)
+    ax.tick_params(axis="x", bottom=False, labelbottom=False)
+    ax.spines[["top", "right", "bottom"]].set_visible(False)
+    ax.spines["left"].set_color(RULE)
+    ax.tick_params(axis="y", colors=INK, pad=1.5)
+    ax.yaxis.set_major_locator(MaxNLocator(4))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: minus(f"{v:g}")))
+
+
+def e_line(ax, x, y, k, dashed=False):
+    style = E_STYLE[k]
+    ax.plot(x, y, color=style["colour"], linewidth=1.1 if not dashed else .9, linestyle="--" if dashed else "-",
+            marker=None if dashed else style["marker"], markersize=2.4, markerfacecolor=style["colour"],
+            markeredgewidth=0, zorder=4 if not dashed else 3, solid_capstyle="round")
+
+
+def e_crp(ax, rug, h, ylim, y_label=True):
+    data = e_data(h, "crp")
+    median = float(E_SPEC["crp"]["median_mg_l"])
+    for k in E_COND:
+        rows = data.loc[data.condition_id.eq(k)].sort_values("value")
+        e_line(ax, rows.value, rows.diff_vs_median_pp, k)
+    ax.set_xscale("log")
+    lo, hi = float(data.value.min()), float(data.value.max())
+    ax.set_xlim(lo / 1.08, hi * 1.08)
+    e_frame(ax, ylim)
+    ax.scatter([median], [0], s=16, facecolor="white", edgecolor=INK, linewidths=.8, zorder=6)
+    knots = [k for k in E_SPEC["crp"]["knots_mg_l"] if lo < k < hi]
+    ax.plot(knots, np.ones(len(knots)), transform=ax.get_xaxis_transform(), linestyle="none", marker=7,
+            markersize=3.2, color=MUTED, clip_on=False)
+    if y_label:
+        ax.set_ylabel("Difference from risk at\ntraining median (pp)", labelpad=2)
+    e_rug(rug, "CRP", log=True)
+    rug.set_xlim(ax.get_xlim())
+    ticks = [t for t in (.1, .3, 1, 3, 10, 30) if lo / 1.08 <= t <= hi * 1.08]
+    rug.set_xticks(ticks, [f"{t:g}" for t in ticks])
+    rug.xaxis.set_minor_locator(mpl.ticker.NullLocator())
+    rug.set_xlabel("CRP (mg/L, log scale)", labelpad=1.5)
+
+
+def e_townsend(ax, rug, h, ylim, family=None, y_label=False, fixed_overlay=False):
+    family = family or E_TOWNSEND_FAMILY
+    data = e_data(h, family)
+    spec = E_SPEC["townsend"]
+    lo, hi = float(data.value.min()), float(data.value.max())
+    for k in E_COND:
+        rows = data.loc[data.condition_id.eq(k)].sort_values("value")
+        if family == "townsend_paired":
+            for _, segment in rows.groupby("townsend_q", sort=True):   # one segment per quintile, broken at boundaries
+                e_line(ax, segment.value, segment.diff_vs_median_pp, k)
+        else:
+            e_line(ax, rows.value, rows.diff_vs_median_pp, k)
+        if fixed_overlay and "townsend_fixed_q" in E_FAMILIES:
+            fixed = e_data(h, "townsend_fixed_q").loc[lambda d: d.condition_id.eq(k)].sort_values("value")
+            e_line(ax, fixed.value, fixed.diff_vs_median_pp, k, dashed=True)
+    ax.set_xlim(lo - .03 * (hi - lo), hi + .03 * (hi - lo))
+    e_frame(ax, ylim)
+    for b in spec["boundaries"]:
+        if lo < b["boundary_z"] < hi:
+            ax.axvline(b["boundary_z"], color=GRID_DARK, linewidth=.55, linestyle=(0, (2, 2)), zorder=0)
+    left = ax.get_xlim()[0]
+    edges = [left] + [b["boundary_z"] for b in spec["boundaries"]] + [ax.get_xlim()[1]]
+    for i, (a, b) in enumerate(zip(edges[:-1], edges[1:])):
+        a, b = max(a, ax.get_xlim()[0]), min(b, ax.get_xlim()[1])
+        if b > a:
+            ax.text((a + b) / 2, 1.0, f"Q{i + 1}", transform=ax.get_xaxis_transform(), ha="center", va="bottom",
+                    fontsize=SMALLEST, color=MUTED)
+    ax.scatter([float(spec["median_z"])], [0], s=16, facecolor="white", edgecolor=INK, linewidths=.8, zorder=6)
+    if y_label:
+        ax.set_ylabel("Difference from risk at\ntraining median (pp)", labelpad=2)
+    else:
+        ax.tick_params(axis="y", labelleft=False)
+    e_rug(rug, "Townsend deprivation", log=False)
+    rug.set_xlim(ax.get_xlim())
+    rug.xaxis.set_major_locator(MaxNLocator(6, integer=True))
+    rug.xaxis.set_major_formatter(FuncFormatter(lambda v, _: minus(f"{v:g}")))
+    rug.set_xlabel("Townsend deprivation (z)  ·  less → more deprived", labelpad=1.5)
+
+
+def e_end_labels(fig, ax, h, family=None):
+    """Condition names at the right end of each curve; returns False when they cannot be separated."""
+    family = family or E_TOWNSEND_FAMILY
+    data = e_data(h, family)
+    ends = []
+    for k in E_COND:
+        rows = data.loc[data.condition_id.eq(k)].sort_values("value")
+        ends.append((float(rows.diff_vs_median_pp.iloc[-1]), k))
+    to_pt = lambda y: ax.transData.transform((0, y))[1] * 72 / fig.dpi
+    bottom, top = (to_pt(v) for v in ax.get_ylim())
+    gap = 1.15 * SMALLEST + 1
+    placed = []
+    for y, k in sorted(ends):
+        p = max(to_pt(y), placed[-1][0] + gap) if placed else to_pt(y)
+        placed.append((p, k))
+    if placed and placed[-1][0] > top + 2 * gap:
+        return False
+    for p, k in placed:
+        y_data = ax.transData.inverted().transform((0, p * fig.dpi / 72))[1]
+        ax.annotate(CONDITION_LABELS[k], xy=(1, y_data), xycoords=("axes fraction", "data"), xytext=(4, 0),
+                    textcoords="offset points", va="center", ha="left", fontsize=SMALLEST, color=INK,
+                    annotation_clip=False)
+    return True
+
+
+def e_legend_handles(dashed=False):
+    handles = [Line2D([], [], color=E_STYLE[k]["colour"], marker=E_STYLE[k]["marker"], markersize=3,
+                      markeredgewidth=0, linewidth=1.1, label=CONDITION_LABELS[k]) for k in E_COND]
+    if dashed:
+        handles += [Line2D([], [], color=MUTED, linewidth=1.1, label="Quintile updated"),
+                    Line2D([], [], color=MUTED, linewidth=.9, linestyle="--", label="Quintile kept")]
+    return handles
+
+
+def panel_e(fig, axes, h):
+    ax_crp, rug_crp, ax_tz, rug_tz = axes
+    ylim = e_limits(h)
+    e_crp(ax_crp, rug_crp, h, ylim)
+    e_townsend(ax_tz, rug_tz, h, ylim)
+    labelled = E_END_LABELS and e_end_labels(fig, ax_tz, h)
+    return labelled
+
+
+# =============================================================================
+# Notebook cell 12
+# =============================================================================
+
 def caption(h):
-    refs = manifest["references"]
-    lifestyle = ", ".join(f"{domain} to {value}" for domain, value in refs["lifestyle_levels"].items())
-    fixed = " and ".join(name.lower() for name in manifest["fixed_as_observed"])
-    b = manifest["bootstrap"]
-    crp = (f"Measured CRP values were set to the training median ({refs['crp_training_median']:.3g} mg/L)."
-           if refs["crp_history"] == "median" else "CRP history was deleted.")
-    townsend = (f"Observed Townsend scores were set to the lower empirical training median "
-                f"(z = {minus(format(refs['townsend_training_median_z'], '.3f'))}) with its original quintile."
-                if refs["townsend"] == "median" else "Townsend deprivation was set to its encoded missing state.")
+    """Compact legend body (npj limit 350 words); reference settings are given in Methods §2.8.1."""
+    scale, _ = BEE_AXIS[h]
+    axis_note = {"symlog": f" Symmetric log axis, linear within ±{BEE_LINTHRESH[h]:g} pp.",
+                 "asinh": f" Inverse hyperbolic sine axis, linear width {BEE_ASINH_WIDTH[h]:g} pp."}.get(scale, "")
+    if BEE_MAX_PER_BIN:
+        axis_note += f" At most {BEE_MAX_PER_BIN} points are drawn per 1-pt interval; summaries use all sampled points."
+    sample = D.loc[D.horizon_months.eq(h) & D.group.eq(GROUP_ORDER[0])]
+    cap = int(manifest["beeswarm"]["max_sample_per_condition"])
     phrase = {("BMI", "Normal"): "normal BMI", ("Smoking", "Never"): "never smoking",
               ("Alcohol", "Never"): "never drinking"}
     named = [phrase.get((d, C.loc[C.domain.eq(d), "reference"].iloc[0]),
                         f"{d} {C.loc[C.domain.eq(d), 'reference'].iloc[0].lower()}") for d in C_DOMAINS]
     c_refs = ", ".join(named[:-1]) + " or " + named[-1]
-    scale, _ = BEE_AXIS[h]
-    axis_note = {
-        "symlog": (f" The horizontal axis is symmetric logarithmic, linear between −{BEE_LINTHRESH[h]:g} and "
-                   f"+{BEE_LINTHRESH[h]:g} percentage points."),
-        "asinh": (f" The horizontal axis is an inverse hyperbolic sine scale with linear width "
-                  f"{BEE_ASINH_WIDTH[h]:g} percentage points (near-linear around zero, logarithmic in the tails)."),
-    }.get(scale, "")
-    if BEE_MAX_PER_BIN:
-        axis_note += (f" For legibility, at most {BEE_MAX_PER_BIN} randomly chosen points are drawn per 1-pt "
-                      f"interval of the axis; outlines and summaries use every sampled point.")
-    sample = D.loc[D.horizon_months.eq(h) & D.group.eq(GROUP_ORDER[0])]
-    per_condition = sample.condition_id.value_counts()
-    n_sampled_conditions = int(sample.condition_id.nunique())
-    n_pairs = len(sample)
-    all_conditions = set(BEE_CONDITION_IDS) == set(range(int(manifest["n_fitted_conditions"])))
-    which = (f"the {n_sampled_conditions} fitted conditions with eligible participants" if all_conditions
-             else f"{n_sampled_conditions} illustrative conditions")
-    cap = int(manifest["beeswarm"]["max_sample_per_condition"])
-    sample_scope = (f"{int(per_condition.iloc[0])} from each of {which}" if per_condition.nunique() == 1 else
-                    f"up to {cap} from each of {which}, and every eligible pair where a condition had fewer")
-    share_note = (" Bracketed percentages give each input's mean share of the total absolute attribution, "
-                  "averaged equally across conditions." if SHARE is not None else "")
-    c_note = ("Cells give the ratio. Faded values have intervals that include 1."
-              if C_VALUES else "Dots mark intervals that exclude 1.")
     pieces = {
-        "overall": (f"Mean absolute Shapley contribution, averaged within each condition and then equally across "
-                    f"all fitted conditions with eligible participants.{share_note}"),
-        "direction": (f"Mean decreases (blue, left) and increases (red, right) in risk across all eligible "
-                      f"participants for each illustrative condition and input group; diamonds give the net mean. "
-                      f"Each input has its own symmetric scale. Brackets give the mean predicted risk in the "
-                      f"condition's eligible risk set."),
-        "lifestyle": (f"Ratios of mean predicted risks with every mapped record set to the stated category versus "
-                      f"{c_refs}, among the same eligible participants with mapped records. {c_note} Hatched "
-                      f"cells have no eligible participants."),
-        "individual": (f"Individual Shapley contributions for {n_pairs:,} randomly sampled eligible participant–condition "
-                       f"pairs ({sample_scope}), on the same input rows as {LETTERS['overall']}; the same "
-                       f"pairs appear in every row. The vertical spread of each row is proportional to the density of "
-                       f"contributions. Colour gives the participant's recorded value of that input as a percentile of "
-                       f"the test cohort; light grey marks unavailable values. "
-                       f"The ink bar and ring give the interquartile range and median of non-zero sampled "
-                       f"contributions. The right column gives the share of all eligible pairs with an exact zero "
-                       f"contribution, weighting conditions equally.{axis_note}"),
+        "overall": ("Mean absolute Shapley contribution, averaged within each condition and then equally across "
+                    "conditions" + ("; brackets give the mean share of total attribution." if SHARE is not None else ".")),
+        "individual": (f"Contributions for {len(sample):,} sampled participant–condition pairs (up to {cap} per "
+                       f"condition; the same pairs in every row). Vertical spread reflects density; colour gives the "
+                       f"participant's value of the input as a percentile; bar and ring give the interquartile range and "
+                       f"median of non-zero contributions. Right column: share of eligible pairs with zero "
+                       f"contribution, which includes participants with no recorded value.{axis_note}"),
+        "direction": (f"Mean decreases (blue) and increases (red) for {len(DISPLAY_CONDITIONS)} illustrative "
+                      "conditions; diamonds give the net mean. Scales differ by input; brackets give mean predicted risk."),
+        "lifestyle": (f"Ratio of mean predicted risks with every mapped record set to the stated category versus "
+                      f"{c_refs}, in the same participants." + (" Cells give the ratio;" if C_VALUES else "")
+                      + " hatched cells have no eligible participants."),
     }
+    if "curves" in LETTERS:
+        pieces["curves"] = E_CURVE_TEXT(h)
     panels = " ".join(f"{letter}, {pieces[key]}" for key, letter in sorted(LETTERS.items(), key=lambda kv: kv[1]))
-    return (
-        f"Fig. 4 | Input contributions to predicted risk in the fitted CRESCENT model. "
-        f"Predictions cover {h} months after {manifest['entry_delay_months']:g}-month entry and account for "
-        f"competing death. Each condition was evaluated in its eligible subset of the "
-        f"{manifest['n_test_participants']:,} held-out participants. Exact group Shapley contributions over "
-        f"{len(GROUP_ORDER)} input groups ({manifest['n_coalitions']} coalitions) were computed in percentage "
-        f"points (pp) of risk with recorded {fixed} held fixed. References: recorded lifestyle categories were set "
-        f"to {lifestyle}. Landmark age was set to the training median ({refs['landmark_age_years']:.1f} years), "
-        f"with event times moved by the same amount so that time since each event was unchanged. Prior diagnosis "
-        f"records were deleted. {crp} {townsend} {panels} Intervals are pointwise "
-        f"{100 * (1 - b['alpha']):g}% participant-bootstrap percentile intervals ({b['n']} resamples), "
-        f"conditional on the fitted model."
-    )
+    fixed = " and ".join(name.lower() for name in manifest["fixed_as_observed"])
+    years = {1: "One", 2: "Two", 5: "Five", 10: "Ten"}.get(h // 12, str(h // 12)) if h % 12 == 0 else f"{h}-month"
+    return (f"Fig. 4 | Input contributions to predicted risk in the fitted CRESCENT model. "
+            f"{years}{'-year' if h % 12 == 0 else ''} risk from {manifest['entry_delay_months']:g}-month entry, accounting for competing death, "
+            f"in eligible held-out participants (n = {manifest['n_test_participants']:,}). Exact group Shapley "
+            f"contributions over {len(GROUP_ORDER)} input groups are in percentage points (pp), with {fixed} as "
+            f"recorded; reference settings are given in Methods. {panels} Estimates describe the fitted model and are "
+            f"not causal effects.")
+
+
+def E_CURVE_TEXT(h):
+    names = ", ".join(CONDITION_LABELS[k] for k in E_CONDITIONS)
+    return (f"Difference in mean predicted risk with every measured CRP record (left) or observed Townsend score "
+            f"(right) set to each value, versus the same participants at the training median (open circle), for "
+            f"{names} (selection rule in Methods). Townsend scores carry their training quintile, so curves break at "
+            f"quintile boundaries (dashed). Triangles mark CRP knots; grey bars show the test-cohort distribution.")
+
+
+def word_count(text):
+    body = text.split("|", 1)[-1]
+    return len(body.split())
 
 
 def draw_stacked(h):
@@ -700,42 +890,62 @@ def draw_stacked(h):
     return fig
 
 
-def draw_paired(h):
-    """Overall (A) and individual (B) contributions side by side on shared input rows."""
-    fig = plt.figure(figsize=(FIGURE_WIDTH_IN, 9.0))
-    left, right = .17, .925
-    split = .405                      # A occupies left..split; B starts after a gutter
-    n_conditions = int(A.loc[A.horizon_months.eq(h), "n_eligible_conditions"].max())
+E_BAND_IN = 2.1      # height of the panel e band, inches
 
-    a = fig.add_axes((left, .735, split - left, .21))
+
+def draw_paired(h):
+    """Overall (a) and individual (b) contributions side by side; optional curves (e) along the bottom."""
+    base = 9.0
+    extra = E_BAND_IN if "curves" in LETTERS and h == E_HORIZON else 0.0
+    height = base + extra
+    fig = plt.figure(figsize=(FIGURE_WIDTH_IN, height))
+    Y = lambda y: (y * base + extra) / height        # v4 positions, moved up above the new band
+    S = lambda s: s * base / height
+    left, right = .17, .925
+    split = .405                      # a occupies left..split; b starts after a gutter
+
+    a = fig.add_axes((left, Y(.735), split - left, S(.21)))
     panel_a(a, h, headroom=1.85)
     a.set_xlabel("Mean |contribution| (pp)", labelpad=2)
-    d = fig.add_axes((split + .045, .735, .862 - split - .045, .21))
-    bar_d = fig.add_axes((.53, .668, .2, .0045))
+    d = fig.add_axes((split + .045, Y(.735), .862 - split - .045, S(.21)))
+    bar_d = fig.add_axes((.53, Y(.668), .2, S(.0045)))
     panel_d(fig, d, bar_d, h, row_labels=False, compact=True)
-    for y_row in range(len(GROUP_ORDER)):   # faint guide carries each row from A into B
+    for y_row in range(len(GROUP_ORDER)):   # faint guide carries each row from a into b
         a.axhline(y_row, color=GRID, linewidth=.45, zorder=0)
 
-    bg = fig.add_gridspec(1, len(GROUP_ORDER), left=left, right=right, bottom=.385, top=.565, wspace=.42)
+    bg = fig.add_gridspec(1, len(GROUP_ORDER), left=left, right=right, bottom=Y(.385), top=Y(.565), wspace=.42)
     axes_b = []
     for j in range(len(GROUP_ORDER)):
         axes_b.append(fig.add_subplot(bg[0, j], sharey=axes_b[0] if axes_b else None))
     panel_b(fig, axes_b, h)
 
-    cg = fig.add_gridspec(1, 4, left=left, right=right + .02, bottom=.045, top=.29,
+    cg = fig.add_gridspec(1, 4, left=left, right=right + .02, bottom=Y(.045), top=Y(.29),
                           width_ratios=[3, 2, 5, .14], wspace=.06)
     axes_c = [fig.add_subplot(cg[0, j]) for j in range(3)]
     panel_c(fig, axes_c, fig.add_subplot(cg[0, 3]), h)
 
-    panel_heading(fig, .962, LETTERS["overall"])
-    panel_heading(fig, .962, LETTERS["individual"], x=split + .01)
-    panel_heading(fig, .606, LETTERS["direction"])
-    panel_heading(fig, .33, LETTERS["lifestyle"])
+    panel_heading(fig, Y(.962), LETTERS["overall"])
+    panel_heading(fig, Y(.962), LETTERS["individual"], x=split + .01)
+    panel_heading(fig, Y(.606), LETTERS["direction"])
+    panel_heading(fig, Y(.33), LETTERS["lifestyle"])
     families = [Patch(facecolor=colour, label=name) for name, colour in FAMILY_COLOURS.items()]
-    fig.legend(handles=families, loc="center right", bbox_to_anchor=(right, .985), ncol=4,
+    fig.legend(handles=families, loc="center right", bbox_to_anchor=(right, Y(.985)), ncol=4,
                fontsize=FONT_SIZE - .75, columnspacing=.9, handlelength=.8, handletextpad=.4, borderaxespad=0)
-    fig.legend(handles=B_LEGEND, loc="center right", bbox_to_anchor=(right, .606), ncol=3,
+    fig.legend(handles=B_LEGEND, loc="center right", bbox_to_anchor=(right, Y(.606)), ncol=3,
                fontsize=FONT_SIZE - .7, handlelength=1, handletextpad=.4, columnspacing=1.1, borderaxespad=0)
+
+    if extra:
+        inch = lambda v: v / height
+        width = .3
+        ax_c = fig.add_axes((left, inch(.66), width, inch(1.02)))
+        rug_c = fig.add_axes((left, inch(.53), width, inch(.11)), sharex=ax_c)
+        ax_t = fig.add_axes((left + width + .06, inch(.66), width, inch(1.02)), sharey=ax_c)
+        rug_t = fig.add_axes((left + width + .06, inch(.53), width, inch(.11)), sharex=ax_t)
+        panel_e(fig, (ax_c, rug_c, ax_t, rug_t), h)
+        panel_heading(fig, inch(1.96), LETTERS["curves"])
+        fig.legend(handles=e_legend_handles(), loc="center right", bbox_to_anchor=(right, inch(1.96)),
+                   ncol=len(E_CONDITIONS), fontsize=FONT_SIZE - .75, handlelength=1.6, columnspacing=1,
+                   handletextpad=.4, borderaxespad=0)
     if DEV:
         fig.text(.5, .998, "DEVELOPMENT SUBSET: NOT FOR PUBLICATION", va="top", ha="center",
                  color="#9a2626", fontsize=FONT_SIZE, fontweight="bold")
@@ -764,39 +974,45 @@ for h in HORIZONS:
     save(fig, f"Fig4_{h}m" + ("_stacked" if LAYOUT == "stacked" else "")
          + ("_symlog" if BEE_AXIS[h][0] == "symlog" and BEE_AXIS_SETTING == "symlog" else ""),
          caption(h))
+    words = word_count(caption(h))
+    print(f"Figure 4 at {h} months: {fig.get_size_inches()[1] * 25.4:.0f} mm tall; legend body {words} words"
+          + ("  (over the 350-word npj limit)" if words > 350 else ""))
     if h == HORIZONS[0]:
         plt.show()
     plt.close(fig)
-print("Saved Figure 4 and captions to:", FIGURE_DIR)
+print("Saved Figure 4 and captions to:", display_path(FIGURE_DIR))
 
 
 # =============================================================================
-# Notebook cell 12
+# Notebook cell 14
 # =============================================================================
 
 def supplementary_caption(h):
     b = manifest["bootstrap"]
     parts = ["Supplementary Fig. | Robustness of the Figure 4 attributions. "]
     if SHARE is not None:
-        parts.append("a, Mean share of the total absolute Shapley attribution per input group, averaged equally "
+        parts.append("A, Mean share of the total absolute Shapley attribution per input group, averaged equally "
                      "across conditions whose total attribution was positive. ")
     if BRIER is not None:
-        parts.append("b, Change in the fixed-model IPCW Brier score when a single input group was set to its "
+        parts.append("B, Change in the fixed-model IPCW Brier score when a single input group was set to its "
                      "Figure 4 reference with all other inputs observed, averaged equally across eligible "
                      "conditions (×10⁻⁴). Positive values indicate that the observed input reduced prediction "
                      "error. ")
     if AGE_AUDIT is not None and AGE_TAILS is not None:
         audit = AGE_AUDIT.iloc[0]
         parts.append(
-            f"c, Setting landmark age to the training median moved "
-            f"{int(audit.diagnosis_records_newly_below_18_n):,} of {int(audit.diagnosis_records_n):,} "
-            f"pre-landmark diagnosis records ({100 * audit.fraction_records_newly_below_18:.2f}%) in "
-            f"{int(audit.participants_with_newly_below_18_n):,} participants "
-            f"({100 * audit.fraction_participants_with_newly_below_18:.2f}%) to before age 18. Points give the "
-            f"median (circle) and 95th percentile (bar end) of the absolute age contribution for participants with and "
-            f"without such a record. ")
-    parts.append(f"Intervals are {100 * (1 - b['alpha']):g}% participant-bootstrap percentile intervals "
-                 f"({b['n']} resamples), conditional on the fitted model.")
+            f"C, Setting landmark age to the training median shifts each participant's diagnosis history by the "
+            f"same amount, which moved {int(audit.diagnosis_records_newly_below_18_n):,} of "
+            f"{int(audit.diagnosis_records_n):,} diagnosis records ({100 * audit.fraction_records_newly_below_18:.2f}%) "
+            f"in {int(audit.participants_with_newly_below_18_n):,} participants "
+            f"({100 * audit.fraction_participants_with_newly_below_18:.2f}%) to before age 18. Points give the median "
+            f"and bar ends the 95th percentile of the absolute age contribution for participants with at least one such "
+            f"record (red) and without (grey). Participants with shifted records were older by construction, which "
+            f"partly explains their larger age contributions. ")
+    if BRIER is not None:
+        parts.append(f"Intervals in B are {100 * (1 - b['alpha']):g}% participant-bootstrap percentile intervals "
+                     f"({b['n']} test-set resamples) for this performance measure, conditional on the fitted model; "
+                     f"they reflect test-sample variability, not uncertainty from model fitting.")
     return "".join(parts)
 
 
@@ -813,17 +1029,16 @@ def draw_supplement(h):
     y = np.arange(len(GROUP_ORDER))
     for i, panel in enumerate(panels):
         ax = fig.add_subplot(grid[0, i])
-        letter = "abc"[i]
+        letter = "ABC"[i]
         if panel == "share":
             d = SHARE.loc[SHARE.horizon_months.eq(h)].set_index("group").reindex(GROUP_ORDER)
             ax.barh(y, d.mean_attribution_share_pct, height=.56, color=[GROUP_COLOURS[g] for g in GROUP_ORDER],
                     linewidth=0)
-            ax.hlines(y, d.ci_low_pct, d.ci_high_pct, color=INK, linewidth=.7)
-            for row, value, end in zip(y, d.mean_attribution_share_pct, np.fmax(d.ci_high_pct, d.mean_attribution_share_pct)):
+            for row, value, end in zip(y, d.mean_attribution_share_pct, d.mean_attribution_share_pct):
                 ax.text(end + 1, row, f"{value:.0f}%", va="center", fontsize=FONT_SIZE - .5, color=INK)
-            ax.set_xlim(0, float(np.nanmax(d.ci_high_pct)) * 1.25)
+            ax.set_xlim(0, float(np.nanmax(d.mean_attribution_share_pct)) * 1.25)
             ax.set_yticks(y, labels)
-            ax.set_xlabel("Mean share of total attribution (%)")
+            ax.set_xlabel("Share of attribution (%)")
             title = "Attribution share"
         elif panel == "brier":
             d = BRIER.loc[BRIER.horizon_months.eq(h)].set_index("group").reindex(GROUP_ORDER)
@@ -836,7 +1051,7 @@ def draw_supplement(h):
             ax.set_xlim(-reach, reach)
             ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: minus(f"{v:.2g}")))
             ax.set_yticks(y, labels if i == 0 else [])
-            ax.set_xlabel(r"Δ IPCW Brier when set to reference ($\times10^{-4}$)")
+            ax.set_xlabel(r"Δ IPCW Brier ($\times10^{-4}$)")
             ax.text(.98, 1.0, "observed input helps →", transform=ax.transAxes, ha="right", va="bottom",
                     fontsize=SMALLEST, color=MUTED)
             title = "Prediction error"
@@ -849,7 +1064,7 @@ def draw_supplement(h):
                 ax.hlines(yc + shift, s.median_abs_age_shapley_pp, s.p95_abs_age_shapley_pp, color=colour,
                           linewidth=.8)
                 ax.scatter(s.median_abs_age_shapley_pp, yc + shift, s=9, color=colour, linewidths=0,
-                           label="Diagnosis moved below 18" if stratum == "newly below 18" else "None moved")
+                           label="≥1 diagnosis shifted before age 18" if stratum == "newly below 18" else "No diagnosis shifted")
             ax.set_yticks(yc, [CONDITION_LABELS[k] for k in order])
             ax.set_ylim(len(order) - .4, -.6)
             ax.set_xlabel("|Age contribution| (pp), median to p95")
@@ -862,7 +1077,7 @@ def draw_supplement(h):
         ax.tick_params(axis="y", length=0)
         ax.xaxis.set_major_locator(MaxNLocator(4))
         trim(ax)
-        ax.set_title(letter, loc="left", fontweight="bold", color=INK, fontsize=FONT_SIZE + 1.5,
+        ax.set_title(letter, loc="left", fontweight="bold", color=INK, fontsize=PANEL_LETTER_SIZE,
                      pad=14, x=-.3 if i == 0 or panel == "age" else -.05)
     if DEV:
         fig.text(.5, .99, "DEVELOPMENT SUBSET: NOT FOR PUBLICATION", va="top", ha="center",
@@ -882,31 +1097,187 @@ for h in HORIZONS:
 
 
 # =============================================================================
-# Notebook cell 14
+# Notebook cell 16
+# =============================================================================
+
+def ratio_heatmap(ax, h, family, order, norm, log_x):
+    data = e_data(h, family)
+    grid = np.sort(data.value.unique())
+    table = (data.pivot_table(index="condition_id", columns="value", values="ratio_vs_median")
+             .reindex(index=order, columns=grid))
+    if log_x:
+        mids = np.sqrt(grid[:-1] * grid[1:])
+        edges = np.r_[grid[0] ** 2 / mids[0], mids, grid[-1] ** 2 / mids[-1]]
+    else:
+        mids = (grid[:-1] + grid[1:]) / 2
+        edges = np.r_[2 * grid[0] - mids[0], mids, 2 * grid[-1] - mids[-1]]
+    values = table.to_numpy(float)
+    logs = np.full(values.shape, np.nan)
+    np.log(values, out=logs, where=np.isfinite(values) & (values > 0))
+    ax.pcolormesh(edges, np.arange(len(order) + 1) - .5, np.ma.masked_invalid(logs), cmap=RISK_RATIOS, norm=norm,
+                  shading="flat", rasterized=True)
+    ax.set_ylim(len(order) - .5, -.5)
+    ax.set_xlim(edges[0], edges[-1])
+    if log_x:
+        ax.set_xscale("log")
+        ticks = [t for t in (.1, .3, 1, 3, 10, 30) if edges[0] <= t <= edges[-1]]
+        ax.set_xticks(ticks, [f"{t:g}" for t in ticks])
+        ax.xaxis.set_minor_locator(mpl.ticker.NullLocator())
+    else:
+        ax.xaxis.set_major_locator(MaxNLocator(6, integer=True))
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: minus(f"{v:g}")))
+        for b in E_SPEC["townsend"]["boundaries"]:
+            if edges[0] < b["boundary_z"] < edges[-1]:
+                ax.axvline(b["boundary_z"], color="white", linewidth=.8)
+    reference = float(E_SPEC["crp"]["median_mg_l"] if family == "crp" else E_SPEC["townsend"]["median_z"])
+    ax.axvline(reference, color=INK, linewidth=.5, linestyle=(0, (1, 1.5)))
+    ax.tick_params(axis="both", length=1.5, pad=1.5, colors=INK)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+
+def dose_supplement_caption(h, include_curves):
+    crp, tz = E_SPEC["crp"], E_SPEC["townsend"]
+    parts = ["Supplementary Fig. | Predicted risk across measured CRP and Townsend deprivation values in the fitted "
+             "CRESCENT model. "]
+    letters = iter("ABCDE")
+    if include_curves:
+        parts.append(f"{next(letters)}–{next(letters)}, {E_CURVE_TEXT(h)} ")
+    a, b = next(letters), next(letters)
+    parts.append(
+        f"{a}–{b}, Ratio of mean predicted {h // 12}-year risk with every measured CRP record ({a}) or observed "
+        f"Townsend score ({b}) set to each value versus the same participants at the training median "
+        f"(CRP {crp['median_mg_l']:.3g} mg/L; Townsend z = {minus(format(tz['median_z'], '.3f'))}, dotted line), for "
+        f"all fitted conditions. Rows share one order (ratio at the highest CRP value, descending); bold labels mark "
+        f"the conditions in the curve panels. Townsend scores were set with their training quintile; white lines mark "
+        f"quintile boundaries. Grey cells have no eligible participants. ")
+    if "townsend_fixed_q" in E_FAMILIES:
+        c = next(letters)
+        parts.append(
+            f"{c}, Townsend curves with the quintile updated to match each score (solid) or each participant's recorded "
+            f"quintile kept (dashed). The comparison shows how much the curves change when the quintile code is not "
+            f"updated; it does not apportion the model's response between the score and the quintile. ")
+    parts.append("Estimates describe the fitted model with all other inputs as recorded and are not causal effects.")
+    return "".join(parts)
+
+
+def draw_dose_supplement(h, include_curves):
+    show_fixed = "townsend_fixed_q" in E_FAMILIES
+    rows_all = sorted(e_data(h, "crp").loc[lambda d: d.eligible_n.gt(0)].condition_id.unique())
+    crp_top = e_data(h, "crp")
+    crp_top = crp_top.loc[crp_top.value.eq(crp_top.value.max())].set_index("condition_id").ratio_vs_median
+    order = crp_top.reindex(rows_all).sort_values(ascending=False, kind="stable").index.tolist()
+    logs = np.log(pd.concat([e_data(h, f).ratio_vs_median for f in ("crp", "townsend_paired")]).clip(lower=1e-9))
+    limit = max(np.log(1.05), float(np.nanmax(np.abs(logs))))
+    norm = TwoSlopeNorm(vmin=-limit, vcenter=0, vmax=limit)
+
+    heat_h = max(4.6, .085 * len(order) + .9)
+    curves_h = 1.9 if include_curves else 0
+    fixed_h = 1.9 if show_fixed else 0
+    height = heat_h + curves_h + fixed_h + .25
+    fig = plt.figure(figsize=(FIGURE_WIDTH_IN, height))
+    y_in = height - .2
+    letters = iter("ABCDE")
+
+    def frac(v):
+        return v / height
+
+    if include_curves:
+        top = y_in - .25
+        ax_c = fig.add_axes((.12, frac(top - 1.15), .33, frac(1.0)))
+        rug_c = fig.add_axes((.12, frac(top - 1.3), .33, frac(.13)), sharex=ax_c)
+        ax_t = fig.add_axes((.54, frac(top - 1.15), .33, frac(1.0)), sharey=ax_c)
+        rug_t = fig.add_axes((.54, frac(top - 1.3), .33, frac(.13)), sharex=ax_t)
+        panel_e(fig, (ax_c, rug_c, ax_t, rug_t), h)
+        fig.legend(handles=e_legend_handles(), loc="upper right", bbox_to_anchor=(.98, frac(y_in)), ncol=len(E_COND),
+                   fontsize=SMALLEST, handlelength=1.6, columnspacing=1, borderaxespad=0)
+        for x in (.045, .47):
+            panel_heading(fig, frac(y_in - .05), next(letters), x=x)
+        y_in -= curves_h
+
+    top = y_in - .3
+    x0, width = .12, .36
+    ax_hc = fig.add_axes((x0, frac(top - (heat_h - .9)), width, frac(heat_h - .9 - .05)))
+    ax_ht = fig.add_axes((x0 + width + .07, frac(top - (heat_h - .9)), width, frac(heat_h - .9 - .05)), sharey=ax_hc)
+    ratio_heatmap(ax_hc, h, "crp", order, norm, log_x=True)
+    ratio_heatmap(ax_ht, h, "townsend_paired", order, norm, log_x=False)
+    ax_hc.set_yticks(range(len(order)), [CONDITION_LABELS[k] for k in order], fontsize=SMALLEST - .5)
+    for label, k in zip(ax_hc.get_yticklabels(), order):
+        if k in E_COND:
+            label.set_fontweight("bold")
+    ax_ht.tick_params(axis="y", labelleft=False)
+    ax_hc.set_xlabel("CRP (mg/L, log scale)", labelpad=1.5)
+    ax_ht.set_xlabel("Townsend deprivation (training z-score)", labelpad=1.5)
+    cax = fig.add_axes((x0 + 2 * width + .1, frac(top - 2.0), .012, frac(1.8)))
+    candidates = np.array([.125, .25, .5, 1, 2, 4, 8])
+    ticks = candidates[np.abs(np.log(candidates)) <= limit]
+    colourbar(fig, cax, RISK_RATIOS, norm, np.log(ticks), [f"{t:g}" for t in ticks], "Ratio vs median",
+              orientation="vertical")
+    for x in (.045, x0 + width + .045):
+        panel_heading(fig, frac(y_in - .05), next(letters), x=x)
+    y_in -= heat_h
+
+    if show_fixed:
+        top = y_in - .3
+        ax_f = fig.add_axes((.12, frac(top - 1.15), .5, frac(1.0)))
+        rug_f = fig.add_axes((.12, frac(top - 1.3), .5, frac(.13)), sharex=ax_f)
+        ylim = e_limits(h, families=("townsend_paired", "townsend_fixed_q"))
+        e_townsend(ax_f, rug_f, h, ylim, family="townsend_paired", y_label=True, fixed_overlay=True)
+        ax_f.legend(handles=e_legend_handles(dashed=True), loc="upper left", bbox_to_anchor=(1.03, 1), ncol=1,
+                    fontsize=SMALLEST, handlelength=2, borderaxespad=0)
+        panel_heading(fig, frac(y_in - .05), next(letters))
+    if DEV:
+        fig.text(.5, .998, "DEVELOPMENT SUBSET: NOT FOR PUBLICATION", va="top", ha="center",
+                 color="#9a2626", fontsize=FONT_SIZE, fontweight="bold")
+    return fig
+
+
+DOSE_SUPPLEMENT = os.getenv("FIG4_DOSE_SUPPLEMENT", "0") != "0" or PANEL_E_MODE == "supplement"
+for h in HORIZONS:
+    if h != E_HORIZON or not DOSE_SUPPLEMENT:
+        continue
+    include = PANEL_E_MODE == "supplement"
+    fig = draw_dose_supplement(h, include_curves=include)
+    save(fig, f"FigS_dose_response_{h}m", dose_supplement_caption(h, include))
+    print(f"Supplementary dose–response figure: {fig.get_size_inches()[1] * 25.4:.0f} mm tall")
+    plt.show()
+    plt.close(fig)
+
+
+# =============================================================================
+# Notebook cell 18
 # =============================================================================
 
 def plotted_tables():
     sel = lambda frame: frame.loc[frame.condition_id.isin(DISPLAY_CONDITIONS)]
+    # Sheet names follow the displayed panel letters; explanation sheets carry no interval columns.
     sheets = {
-        "Fig4a": A.loc[A.scope.eq("all conditions")],
-        "Fig4b": sel(B)[["horizon_months", "condition_id", "abbreviation", "condition_name", "group",
-                         "eligible_n", "mean_predicted_risk_pct", "mean_increase_pp", "increase_ci_low_pp",
-                         "increase_ci_high_pp", "mean_decrease_pp", "decrease_ci_low_pp", "decrease_ci_high_pp",
-                         "mean_signed_shapley_pp", "positive_n", "negative_n", "zero_n"]],
-        "Fig4c": sel(C)[["horizon_months", "domain", "level", "reference", "condition_id", "abbreviation",
-                         "eligible_n", "mean_level_risk", "mean_reference_risk", "mean_diff_pp", "ci_low",
-                         "ci_high", "risk_ratio", "ratio_ci_low", "ratio_ci_high"]],
-        "Fig4d_points": D,
-        "Fig4d_summary": D_SUMMARY,
+        f"Fig4{LETTERS['overall']}": A.loc[A.scope.eq("all conditions"),
+                                           ["horizon_months", "group", "mean_abs_shapley_pp", "n_eligible_conditions"]],
+        f"Fig4{LETTERS['individual']}_points": D,
+        f"Fig4{LETTERS['individual']}_summary": D_SUMMARY,
+        f"Fig4{LETTERS['direction']}": sel(B)[["horizon_months", "condition_id", "abbreviation", "condition_name",
+                                               "group", "eligible_n", "mean_predicted_risk_pct", "mean_increase_pp",
+                                               "mean_decrease_pp", "mean_signed_shapley_pp", "positive_n",
+                                               "negative_n", "zero_n"]],
+        f"Fig4{LETTERS['lifestyle']}": sel(C)[["horizon_months", "domain", "level", "reference", "condition_id",
+                                               "abbreviation", "eligible_n", "mean_level_risk",
+                                               "mean_reference_risk", "mean_diff_pp", "risk_ratio"]],
     }
+    curves = E.loc[E.condition_id.isin(E_CONDITIONS) & E.family.isin(["crp", E_TOWNSEND_FAMILY])]
+    sheets[f"Fig4{LETTERS['curves']}" if "curves" in LETTERS else "FigS_dose_curves"] = curves
+    if DOSE_SUPPLEMENT:
+        sheets["FigS_dose_all_conditions"] = E
+    sheets[f"Fig4{LETTERS['curves']}_distribution" if "curves" in LETTERS else "FigS_dose_distribution"] = E_DIST
+    sheets = dict(sorted(sheets.items()))
     if SHARE is not None:
-        sheets["FigS_a_share"] = SHARE
+        sheets["FigS_A_share"] = SHARE
     if BRIER is not None:
-        sheets["FigS_b_brier"] = BRIER
+        sheets["FigS_B_brier"] = BRIER
     if AGE_TAILS is not None:
-        sheets["FigS_c_age_tails"] = sel(AGE_TAILS)
+        sheets["FigS_C_age_tails"] = sel(AGE_TAILS)
     if AGE_AUDIT is not None:
-        sheets["FigS_c_age_audit"] = AGE_AUDIT
+        sheets["FigS_C_age_audit"] = AGE_AUDIT
     for name, frame in sheets.items():
         if "horizon_months" in frame and frame.horizon_months.isin(HORIZONS).all() is False:
             raise ValueError(f"{name}: unexpected horizon.")
@@ -914,12 +1285,13 @@ def plotted_tables():
 
 
 provenance = pd.DataFrame([
-    ("export_dir", str(EXPORT_DIR)), ("export_manifest_sha256", MANIFEST_SHA256),
+    ("export_dir", display_path(EXPORT_DIR)), ("export_manifest_sha256", MANIFEST_SHA256),
     ("export_created_utc", manifest.get("created_utc")),
-    ("checkpoint_sha256", manifest.get("source", {}).get("checkpoint_sha256")),
+    ("checkpoint_sha256", manifest.get("source", {}).get("checkpoint_sha256")),  # hash only
     ("n_test_participants", manifest["n_test_participants"]), ("development_subset", DEV),
     ("bootstrap", json.dumps(manifest["bootstrap"])), ("references", json.dumps(manifest["references"], ensure_ascii=False)),
-    ("layout", LAYOUT), ("beeswarm_axis", json.dumps({str(h): v for h, v in BEE_AXIS.items()})),
+    ("layout", LAYOUT), ("panel_e", PANEL_E_MODE),
+    ("dose_response", json.dumps(E_SPEC, ensure_ascii=False)), ("beeswarm_axis", json.dumps({str(h): v for h, v in BEE_AXIS.items()})),
     ("plotted_utc", datetime.now(timezone.utc).isoformat(timespec="seconds")),
 ], columns=["field", "value"])
 
@@ -940,14 +1312,14 @@ except ImportError:
     print("openpyxl is not installed; wrote source data as CSV files in", folder)
 
 figure_manifest = {
-    "schema": "crescent.fig4.figures.v4",
+    "schema": "crescent.fig4.figures.v5",
     "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    "export_dir": str(EXPORT_DIR), "export_manifest_sha256": MANIFEST_SHA256,
+    "export_dir": display_path(EXPORT_DIR), "export_manifest_sha256": MANIFEST_SHA256,
     "settings": {"beeswarm_axis": {str(h): {"scale": s, "reason": r} for h, (s, r) in BEE_AXIS.items()},
                  "symlog_linear_threshold_pp": {str(h): v for h, v in BEE_LINTHRESH.items()},
                  "asinh_linear_width_pp": {str(h): v for h, v in BEE_ASINH_WIDTH.items()},
-                 "beeswarm_max_per_bin": BEE_MAX_PER_BIN, "layout": LAYOUT, "panel_c_values": C_VALUES, "value_ramp": {"name": VALUE_RAMP_NAME, "stops": VALUE_RAMP_STOPS}},
+                 "beeswarm_max_per_bin": BEE_MAX_PER_BIN, "layout": LAYOUT, "panel_e": PANEL_E_MODE, "font_size": FONT_SIZE, "panel_c_values": C_VALUES, "value_ramp": {"name": VALUE_RAMP_NAME, "stops": VALUE_RAMP_STOPS}},
     "outputs": {str(p.relative_to(FIGURE_DIR)): hashlib.sha256(p.read_bytes()).hexdigest() for p in OUTPUTS},
 }
 (FIGURE_DIR / "figure_manifest.json").write_text(json.dumps(figure_manifest, indent=2), encoding="utf-8")
-print(f"Wrote {len(OUTPUTS)} files and figure_manifest.json to {FIGURE_DIR}")
+print(f"Wrote {len(OUTPUTS)} files and figure_manifest.json to {display_path(FIGURE_DIR)}")
