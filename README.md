@@ -13,38 +13,50 @@ condition-specific cumulative-incidence estimates, accounting for competing deat
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](requirements.txt)
 [![PyTorch 2.6](https://img.shields.io/badge/PyTorch-2.6-ee4c2c.svg)](requirements.txt)
 
-[Model details](docs/model.md) · [Comparators](docs/comparators.md) · [Figures](figures/README.md) · [InflAIM codelists](https://github.com/Inflaim-Study/Inflaim-LTC-code-list) · Part of the [InflAIM programme](https://github.com/Inflaim-Study)
+[Manuscript release v1.0.1](https://github.com/dansileshi/crescent/releases/tag/v1.0.1) · [Model details](docs/model.md) · [Comparators](docs/comparators.md) · [Figures](figures/README.md) · [InflAIM codelists](https://github.com/Inflaim-Study/Inflaim-LTC-code-list) · Part of the [InflAIM programme](https://github.com/Inflaim-Study)
 
 </div>
 
-> **Status:** the paper is under review. 
+> **Status:** the paper is under review. This repository shares the **full analysis code**: the CRESCENT model, all comparator models, the evaluation, ablation and explanation analyses, and the figure-plotting code. No UK Biobank data, derived data, aggregate result tables or fitted model weights are shared (see [Data and model availability](#data-and-model-availability)).
 
 <p align="center">
   <img src="figures/figure1/crescent_overview_animated.svg" alt="CRESCENT overview: a health record is encoded, read separately for each condition, combined into additive log-hazards, and converted into a competing-risk profile" width="100%">
 </p>
 
-
 ---
 
 ## Overview
 
-Estimating which long-term conditions (LTCs) will next be recorded requires accounting for competing death and for differences in the information available for each person. CRESCENT uses primary-care diagnosis histories and recruitment covariates to estimate, for each of 60 LTCs, the probability of a **first recorded diagnosis before death** within 1, 2, 5 and 10 years.
+Estimating which long-term conditions (LTCs) will next be recorded requires accounting for competing death and for differences in the information available for each person. CRESCENT uses primary-care diagnosis histories and recruitment covariates to estimate the probability of a **first recorded primary-care diagnosis before death** for each of **58 fitted conditions**, out of 60 prespecified conditions in the [InflAIM framework](https://github.com/Inflaim-Study/Inflaim-LTC-code-list). The two remaining conditions had fewer than 100 training cases and were not fitted.
 
-- **Cohort:** 229,950 UK Biobank participants with linked primary-care records, split by assessment centre into training (161,020; 14 centres), validation (22,962; 6 centres) and held-out test (45,968; 7 centres).
-- **Prediction design:** predictors are fixed at recruitment. Each participant–condition pair enters the risk set at **six months** if alive, under observation and free of that condition. Horizons of 12, 24, 60 and 120 months after entry end at recruitment months 18, 30, 66 and 126.
-- **Targets:** 60 prespecified conditions from the [InflAIM framework](https://github.com/Inflaim-Study/Inflaim-LTC-code-list). 58 had at least 100 training cases and were fitted.
+- **Cohort:** 229,950 UK Biobank participants with linked primary-care records, split by assessment centre.
+- **Prediction design:** predictors are fixed at the first recruitment assessment. Each participant–condition pair enters the risk set **six months after recruitment** if the participant is alive, still under observation and has no record of that condition.
+- **Competing risk:** death is modelled as a competing event for every condition.
+
+| Evaluation | Years after six-month entry | Months after recruitment |
+|---|---:|---:|
+| Primary | 2 and 5 | 30 and 66 |
+| Secondary | 1 and 10 | 18 and 126 |
+
+A five-year risk is therefore the probability of a first recorded diagnosis between months 6 and 66 after recruitment. Follow-up is limited at the ten-year horizon, so ten-year estimates should be interpreted with caution.
+
+| Partition | Participants | Assessment centres |
+|---|---:|---:|
+| Training | 161,020 | 14 |
+| Validation | 22,962 | 6 |
+| Held-out test | 45,968 | 7 |
 
 ## Key findings
 
+Held-out test results reported in the paper:
+
 | | CRESCENT | Notes |
 |---|---|---|
-| Macro AUROC, 2 and 5 years | **0.78** | Tied with locally pretrained CRESCENT-PT, among nine models |
+| Macro AUROC, 2 and 5 years | **0.78** | Tied with the locally pretrained CRESCENT-PT, among nine models |
 | 5-year competing-risk concordance (Wolbers) | **0.78** | Best mean rank |
-| Scaled integrated Brier skill | **2.3%** | Best mean rank; same as CRESCENT-PT |
-| Integrated calibration error | 1.8 × 10⁻³ | Penalised Cox was lower (1.5 × 10⁻³) |
-| Largest share of Shapley attribution | Diagnosis history **56%** | Then landmark age 19% and BMI 10% |
+| Largest share of Shapley attribution | Diagnosis history **56%** | Then age 19% and BMI 10% |
 
-In the three-seed ablation study, removing event history from the disease rates lowered 60-month macro AUROC by **0.131**. Removing historical event age and reader recency lowered it by **0.080**.
+At five years, CRESCENT and penalised Cox were within 0.01 AUROC across the ten most common conditions shown in the paper; several rarer conditions showed larger differences favouring CRESCENT (22–101 five-year test events per condition). In the three-seed ablation study, removing event history from the disease rates lowered 60-month macro AUROC by **0.131**, and removing historical event age and reader recency lowered it by **0.080**.
 
 ## Repository structure
 
@@ -57,8 +69,7 @@ ablations/           Table 2: seven configurations x three seeds
 explainability/      Figs. 4-5: Shapley values, ALE, diagnosis-removal and look-back analyses
 supplementary/       Figs. S2-S4: hyperparameter screen, history sensitivity, scaling
 figures/             Fig. 1 overview and plotting scripts for Figs. 2-5
-results/             Aggregate result tables
-docs/                Model details, comparator descriptions
+docs/                Model details, input format, comparator descriptions
 run_crescent.py      Runs the CRESCENT stages in order
 ```
 
@@ -67,33 +78,45 @@ run_crescent.py      Runs the CRESCENT stages in order
 | Cohort and data preparation (§2.1–2.3, Table 1) | [`data_preparation/`](data_preparation/) |
 | CRESCENT model and training (§2.4–2.5) | [`crescent/`](crescent/) · [docs/model.md](docs/model.md) |
 | Comparators (§2.6, Fig. 2) | [`comparators/`](comparators/) · [docs/comparators.md](docs/comparators.md) |
-| Evaluation and confidence intervals (§2.7, Fig. 3) | [`evaluation/`](evaluation/) |
-| Architecture ablations (§2.9, Table 2) | [`ablations/`](ablations/) |
-| Explanations (§2.8, Figs. 4–5) | [`explainability/`](explainability/) |
-| Supplementary Figs. S2–S4 | [`supplementary/`](supplementary/) |
+| Evaluation and confidence intervals (§2.7, Figs. 2–3) | [`evaluation/`](evaluation/) |
+| History sensitivity and scaling (§2.8, Supplementary Figs. S2–S4) | [`supplementary/`](supplementary/) |
+| Explanations (§2.9, Figs. 4–5) | [`explainability/`](explainability/) |
+| Architecture ablations (§2.10, Table 2) | [`ablations/`](ablations/) |
 | Figures 1–5 | [`figures/`](figures/) |
 
-Folders other than `crescent/` and `evaluation/` are being filled in ahead of publication.
+### What is shared
+
+All analysis code for the paper is shared; only the data and fitted weights are not.
+
+| Area | Code included |
+|---|---|
+| CRESCENT model, training and evaluation | Full manuscript pipeline |
+| Comparator models | All eight comparators (penalised Cox, XGBoost, SurvTRACE-aligned, Dynamic-DeepHit-inspired, MOTOR, Delphi-2M-inspired, Gemma 4 E4B and CRESCENT-PT), with run instructions |
+| Ablations, explanations and supplementary analyses | Code for Table 2, Figs. 4–5 and Supplementary Figs. S2–S4 |
+| Figures | Figure 1 graphic and plotting code for Figures 2–5, run on your own evaluation outputs |
+| Data preparation | Code to build the prepared splits from UK Biobank records |
 
 ## Installation
 
+Use the tagged release for the manuscript code:
+
 ```bash
-git clone https://github.com/dansileshi/crescent.git
+git clone --branch v1.0.1 https://github.com/dansileshi/crescent.git
 cd crescent
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 The paper used Python 3.11.4 and PyTorch 2.6.0 with CUDA 12.4 on a single GPU. Data preparation used Polars 1.37.1.
 
 ## Running CRESCENT
 
-The model reads prepared `train.csv`, `val.csv` and `test.csv` files built from UK Biobank data, so running it requires approved UK Biobank access.
+Running the model requires approved UK Biobank access and the prepared `train.csv`, `val.csv` and `test.csv` files built with the data-preparation code. See [docs/model.md](docs/model.md) for the input fields and all settings.
 
 ```bash
-export CRESCENT_PREPARED_DATA_DIR=/path/to/splits_229950_one_month_cap
+export CRESCENT_PREPARED_DATA_DIR=/path/to/prepared_splits
 export EHR_CRESCENT_FINAL_OUTPUT=runs/CRESCENT_Final     # a new, empty folder
 python run_crescent.py                                  # all stages
-python run_crescent.py --stages 1-4                     # up to training only
+python run_crescent.py --stages 1-4                     # up to training and checkpoint selection
 ```
 
 | Stage | File | What it does |
@@ -105,24 +128,30 @@ python run_crescent.py --stages 1-4                     # up to training only
 | 5 | `crescent/ensemble.py` | Optional seed ensemble (off by default) |
 | 6 | `evaluation/evaluate.py` | Test metrics: AUROC, concordance, Brier, calibration |
 | 7 | `evaluation/bootstrap.py` | 200-resample participant bootstrap |
-| 8 | `evaluation/export_figure3_inputs.py` | Aggregate inputs for Fig. 3 |
+| 8 | `evaluation/export_figure3_inputs.py` | Inputs for Fig. 3 |
 
-The stage files were split directly from the notebook used for the paper and share one Python session, like notebook cells, so run them through `run_crescent.py` rather than importing them. Default settings reproduce the published model. All settings are listed in [docs/model.md](docs/model.md#settings-environment-variables).
+The stage files were split directly from the notebook used for the paper and share one Python session, like notebook cells, so run them through `run_crescent.py` rather than importing them. Default settings reproduce the published model configuration.
 
-## Redrawing the figures
+| Output | Contents |
+|---|---|
+| `best_model_by_val_loss.pt` | Checkpoint selected by validation loss |
+| `training_history.csv` | Training and validation history |
+| `test_summary_publication_with_ci.csv` | Held-out performance summaries and confidence intervals |
+| `test_per_condition_metrics_with_ci.csv` | Performance by condition and horizon |
 
-Figs. 2–5 can be redrawn from the aggregate tables in `figures/figure*/source_data/` without UK Biobank access. See [figures/README.md](figures/README.md).
+All outputs contain or are derived from UK Biobank data. Keep them in approved storage and do not share them outside the terms of your UK Biobank access.
 
-## Data access and scope
+## Data and model availability
 
-- **Data.** UK Biobank individual-level data cannot be redistributed. Approved researchers can apply through [UK Biobank](https://www.ukbiobank.ac.uk/enable-your-research/apply-for-access). This study used application number **303849**. No participant-level data or trained weights are included here.
+- **Code is shared; data and weights are not.** All analysis and plotting code is in this repository. In line with UK Biobank access conditions, it contains no participant-level data, derived datasets, aggregate result tables or fitted model weights. This study used application number **303849**.
+- **Reproducing the results** requires approved UK Biobank access ([apply here](https://www.ukbiobank.ac.uk/enable-your-research/apply-for-access)), preparing the data with the provided code and retraining the model.
 - **Outcomes** are *first recorded primary-care diagnoses*, not biological onset.
-- **Validation** used an internal geographic holdout within UK Biobank, not an independent external cohort. 94.9% of the cohort was recorded as White.
-- **Not a clinical tool.** CRESCENT is a research model and needs external validation before any clinical use.
+- **Validation** used an internal geographic hold-out within UK Biobank, not an independent external cohort. 94.9% of the cohort was recorded as White.
+- **Not a clinical tool.** CRESCENT is a research model and needs evaluation in independent populations before any clinical use.
 
 ## Citation
 
-If you use this code, please cite the paper:
+If you use this code, please cite the paper and the [versioned software release](https://doi.org/10.5281/zenodo.24497210):
 
 ```bibtex
 @article{asfaw2026crescent,
@@ -153,4 +182,4 @@ This research was conducted using the UK Biobank Resource under application numb
 
 ## License
 
-Code is released under the [MIT License](LICENSE). Aggregate result tables and figures are released under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Code is released under the [MIT License](LICENSE).
