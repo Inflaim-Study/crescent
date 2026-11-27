@@ -87,8 +87,9 @@ Please cite the paper and the [software release](https://doi.org/10.5281/zenodo.
 ```bibtex
 @article{asfaw2026crescent,
   title   = {CRESCENT estimates condition-specific risks of first recorded long-term conditions},
-  author  = {Asfaw, Daniel and Zebin, Tahmina and Khondoker, Mizanur and
-             Olaniran, Oyebayo Ridwan and Lewin, Alex and Welch, Ailsa and
+  author  = {Asfaw, Daniel S. and Zebin, Tahmina and Khondoker, Mizanur and
+             Olaniran, Oyebayo Ridwan and Paria, Soumya Subhra and
+             Lewin, Alex and Welch, Ailsa and
              Kulinskaya, Elena and Fox, Chris and MacGregor, Alexander J. and
              Aung, Min Hane},
   journal = {TBC},
@@ -101,7 +102,7 @@ Software citation metadata is in [`CITATION.cff`](CITATION.cff).
 
 ## Authors and funding
 
-Daniel Asfaw¹, Tahmina Zebin², Mizanur Khondoker¹, Oyebayo Ridwan Olaniran³, Alex Lewin³, Ailsa Welch⁴, Elena Kulinskaya³, Chris Fox⁵, Alexander J MacGregor¹, Min Hane Aung¹
+Daniel S Asfaw¹, Tahmina Zebin², Mizanur Khondoker¹, Oyebayo Ridwan Olaniran³, Soumya Subhra Paria³, Alex Lewin³, Ailsa Welch⁴, Elena Kulinskaya³, Chris Fox⁵, Alexander J MacGregor¹, Min Hane Aung¹
 
 ¹ University of East Anglia · ² Brunel University of London · ³ London School of Hygiene and Tropical Medicine · ⁴ Norwich Medical School, University of East Anglia · ⁵ NIHR HealthTech Research Centre, University of Exeter
 
